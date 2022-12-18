@@ -1,32 +1,26 @@
-addpath("/Users/benjaminsylvanus/Documents/CoopMRI/treestoolbox-master/")
-
-d =  '/Users/benjaminsylvanus/Downloads/SWC';
+% addpath("/Users/benjaminsylvanus/Documents/CoopMRI/treestoolbox-master/");
+clearvars;
+addpath(genpath('/Users/bensylvanus/Desktop/code/work/'));
+d = '/Users/bensylvanus/Desktop/code/work/SWC';
 
 start_trees; clc;
 
-cd( '/Users/benjaminsylvanus/Downloads/SWC');
+cd('/Users/bensylvanus/Desktop/code/work/SWC');
 
 dswc = dir("*.swc");
-names = {dswc.name}'
+names = {dswc.name}';
 load_tree(names{1});
 t = {};
 for i = 1:length(dswc)
     t{i,1} = load_tree(names{i  },' ');
 end
-cd ('/Users/benjaminsylvanus/Desktop/layer-analysis/')
+cd ('/Users/bensylvanus/Desktop/code/work/trees-prep/')
 
 %%
-close all;
-figure();
-hold on;
-for i = 1:100
-
-    hold on;
-    plot_tree(t{i,1});
-
-end
-
-
+clearvars;
+load("t.mat");
+rt = resample_tree(t{10},1000,'-s -d');  
+swc_tree(rt,'exampleTree.swc');
 %%
 lens = len_tree(t{1,1});
 tic;
