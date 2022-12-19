@@ -56,6 +56,48 @@ toc;
 
 A = A(~cellfun('isempty', A));
 sizes = cellfun('size', A, 1);
+%%
+rw = randomwalker(1,1,boundSize,swc, LUT, A, pairs);
+
+% to verify inside visually
+inds = pairs(A{LUT(rw.curr(1), rw.curr(2),rw.curr(3))},:);
+
+% pairlist => [child, parent]
+children = inds(:, 1);
+parents = inds(:, 2);
+[X, Y, Z]= sphere(16);
+clf;
+hold on;
+
+% for each pair: check if point is inside
+for i = 1:length(children)
+
+    % get base and target ids
+    baseid = children(i); targetid = parents(i);
+
+    % p1 = swc{pairs(i, 1), 2:5};
+    p1 = swc{baseid, 2:5}; p2 = swc{targetid, 2:5};
+
+    x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
+    X2 = X * r1; Y2 = Y * r1; Z2 = Z * r1;
+    h = surf(X2 + x1,Y2 + y1,Z2 + z1);
+    h.FaceAlpha=0.05;
+    h.EdgeColor="none";
+    h.FaceColor = 'red';
+
+    x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
+    X2 = X * r2; Y2 = Y * r2; Z2 = Z * r2;
+    h = surf(X2 + x2,Y2 + y2,Z2 + z2);
+    h.FaceAlpha = 0.05;
+    h.EdgeColor="none";
+    h.FaceColor = 'red';
+end
+X2 = X * 0.1; Y2 = Y * 0.1; Z2 = Z * 0.1;
+h = surf(X2 + rw.curr(1),Y2 + rw.curr(2),Z2 + rw.curr(3));
+h.FaceColor = "blue";
+
+
+
 
 %% To PLOT
 close all;
