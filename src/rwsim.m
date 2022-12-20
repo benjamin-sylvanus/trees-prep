@@ -23,7 +23,7 @@ zz_test_tmp;
 clc; clearvars; close all;
 tic;
 addpath(genpath("./"));
-swc = read_t('exampleTree.swc');
+swc = read_t('oneconn.swc');
 NodeID = swc(:, 1); Coords = swc(:, 3:5);
 Radii = swc(:, 6); Parents = swc(:, 7);
 
@@ -45,7 +45,7 @@ end
 toc;
 %%
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.4);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.05);
 
 toc;
 % addpath(genpath(['/Users/benjaminsylvanus/Documents/GitHub/' ...
@@ -56,6 +56,7 @@ toc;
 
 A = A(~cellfun('isempty', A));
 sizes = cellfun('size', A, 1);
+
 % %%
 % rw = randomwalker(1,1,boundSize,swc, LUT, A, pairs);
 %
@@ -97,6 +98,14 @@ sizes = cellfun('size', A, 1);
 % h.FaceColor = "blue";
 
 %%
+
+%%%%%% IF THE RW CROSSES OUTSIDE BOUNDS OF
+% LUT THE CURRPOINT STILL NEEDS TO BE CHECKED
+
+% embeddings -> adda openai
+% least semantic correlation to user query.
+% use cos similarity
+
 close all;
 figure();
 hold on;
@@ -104,10 +113,10 @@ hold on;
 axis equal
 
 for i = 1:5
-    clc;
+
     sim = random_walker_sim(LUT, A, pairs, boundSize, swc, 1, 0);
     tic;
-    sim = sim.eventloop(1000);
+    sim = sim.eventloop(5000);
     toc;
 
     rwpath = sim.rwpath;

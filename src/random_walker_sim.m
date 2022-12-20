@@ -47,14 +47,15 @@ classdef random_walker_sim
 
                 % check positions
 
-                inside = obj.checkpos(current, next, obj.swc, obj.lookup_table, obj.index_array, obj.pairs);
+                [inside] = obj.checkpos(current, next, obj.swc, ...
+                obj.lookup_table, obj.index_array, obj.pairs);
 
                 if inside
                     %                     disp(obj.randomwalker.curr);
                     obj.randomwalker.curr = obj.randomwalker.next;
                     %                     disp(obj.randomwalker.curr);
                 else
-                    %                     disp("not inside")
+                    % disp("Curr Inside")
                 end
 
                 obj.rwpath(i, :) = obj.randomwalker.curr(:)';
@@ -67,13 +68,18 @@ classdef random_walker_sim
             cvoxes = float2vox(curr);
             nvoxes = float2vox(next);
 
-            if all(all(cvoxes <= obj.boundSize')) && all(all(nvoxes < obj.boundSize')) && all(all(cvoxes > 0)) && all(all(nvoxes > 0))
+            if all(all(cvoxes <= obj.boundSize')) && ...
+                    all(all(nvoxes < obj.boundSize')) && ...
+                    all(all(cvoxes > 0)) && ...
+                    all(all(nvoxes > 0))
 
                 cvoxes = float2vox(curr);
 
                 %             cvoxes = unique(cvoxes);
 
-                cvoxes = sub2ind(obj.boundSize, cvoxes(1, :), cvoxes(2, :), cvoxes(3, :));
+                cvoxes = sub2ind(obj.boundSize, cvoxes(1, :), ...
+                cvoxes(2, :), cvoxes(3, :));
+
                 % checkvoxes correct
                 cindicies = LUT(cvoxes);
 
@@ -89,41 +95,14 @@ classdef random_walker_sim
                 % checkvoxes correct
                 nindicies = LUT(nvoxes);
 
-                indicies = [nindicies; cindicies];
-
                 indicies = obj.combineinds(cindicies, nindicies);
 
                 % check lookup-table using subscripted index of [x y z]
                 %             indicies = LUT(pos(1), pos(2), pos(3));
 
-                x0 = curr(1); y0 = curr(2); z0 = curr(3);
-                nx0 = next(1); ny0 = next(2); nz0 = next(3);
-
-                currinside = false;
-                nextinside = false;
-
                 if (indicies ~= 0)
 
-                    % get pairs from A
-                    pairlist = A{indicies};
-                    ps = pairs(pairlist, :);
-
-                    % pairlist => [child, parent]
-                    children = ps(:, 1);
-                    parents = ps(:, 2);
-
-                    % for each pair: check if point is inside
-                    for i = 1:length(children)
-
-                        % get base and target ids
-                        baseid = children(i); targetid = parents(i);
-                        p1 = swc{baseid, 2:5};
-                        p2 = swc{targetid, 2:5};
-                        x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
-                        x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-                        currinside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2) | currinside;
-                        nextinside = pointbasedswc2v(nx0, ny0, nz0, x1, x2, y1, y2, z1, z2, r1, r2) | nextinside;
-                    end
+                    [currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
 
                     if currinside && nextinside
                         %                     disp("INSIDE: ");
@@ -131,18 +110,57 @@ classdef random_walker_sim
                     elseif currinside && ~nextinside
                         %                     disp("current in, next out");
                         inside = 0;
+                    elseif ~currinside && ~nextinside
+                        disp("RW Outside: ");
+                        inside = 0;
+                    elseif ~currinside && nextinside
+                        disp("RW Outside NextInside: ");
+                        inside = 0;
                     else
                         disp("OUTSIDE: ")
                         inside = 0;
                     end
 
                 else
-                    inside = 1;
+                    inside = 0;
                 end
 
             else
-                disp("OUTSIDE RANGE");
-                inside = 0;
+                % if the step exits the bounds: check rw inside cell
+                if all(all(cvoxes <= obj.boundSize')) && all(all(cvoxes > 0))
+                    cvoxes = float2vox(curr);
+                    cvoxes = sub2ind(obj.boundSize, cvoxes(1, :), ...
+                        cvoxes(2, :), cvoxes(3, :));
+                    % checkvoxes correct
+                    cindicies = LUT(cvoxes);
+                    indicies = obj.combineinds(cindicies, cindicies);
+
+                    if (indicies ~= 0)
+                        currinside = checkone_connection(obj, indicies, A, swc, curr);
+
+                        if currinside
+                            % if there was a conn but rw is inside cell
+                            % prevent step.
+                            inside = 0;
+                        else
+                            % if there was a connection and rw is outside
+                            % then step is allowed
+                            inside = 1;
+                        end
+
+                    else
+                        % if the were no connections, rw is outside and
+                        % should be allowed to step.
+                        inside = 1;
+                    end
+
+                else
+                    inside = 0;
+                    disp("NEEDS FIXING: randomwalker is inside range but step goes out");
+                end
+
+                % disp("OUTSIDE RANGE");
+
             end
 
         end
@@ -160,6 +178,60 @@ classdef random_walker_sim
                 inds = nind;
             else
                 inds = 0;
+            end
+
+        end
+
+        function [currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next)
+            x0 = curr(1); y0 = curr(2); z0 = curr(3);
+            nx0 = next(1); ny0 = next(2); nz0 = next(3);
+
+            currinside = false;
+            nextinside = false;
+
+            % get pairs from A
+            pairlist = A{indicies};
+            ps = obj.pairs(pairlist, :);
+
+            % pairlist => [child, parent]
+            children = ps(:, 1);
+            parents = ps(:, 2);
+
+            % for each pair: check if point is inside
+            for i = 1:length(children)
+                % get base and target ids
+                baseid = children(i); targetid = parents(i);
+                p1 = swc{baseid, 2:5};
+                p2 = swc{targetid, 2:5};
+                x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
+                x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
+                currinside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2) | currinside;
+                nextinside = pointbasedswc2v(nx0, ny0, nz0, x1, x2, y1, y2, z1, z2, r1, r2) | nextinside;
+            end
+
+        end
+
+        function inside = checkone_connection(obj, indicies, A, swc, pos)
+            x0 = pos(1); y0 = pos(2); z0 = pos(3);
+            inside = false;
+
+            % get pairs from A
+            pairlist = A{indicies};
+            ps = obj.pairs(pairlist, :);
+
+            % pairlist => [child, parent]
+            children = ps(:, 1);
+            parents = ps(:, 2);
+
+            % for each pair: check if point is inside
+            for i = 1:length(children)
+                % get base and target ids
+                baseid = children(i); targetid = parents(i);
+                p1 = swc{baseid, 2:5};
+                p2 = swc{targetid, 2:5};
+                x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
+                x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
+                inside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2) | inside;
             end
 
         end
