@@ -29,7 +29,7 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
         pos_fill = A(Sx:Nx, Sy:Ny, Sz:Nz);
 
         Q = find(pos == 1);
-        [ix iy iz] = ind2sub(size(pos), Q);
+        [ix, iy, iz] = ind2sub(size(pos), Q);
         mxyz = mean([iy, ix, iz]);
 
         poses(i, :) = mxyz + [Sy Sx Sz];

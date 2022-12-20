@@ -72,24 +72,10 @@ classdef randomwalker
 
                     % get base and target ids
                     baseid = children(i); targetid = parents(i);
-
-                    % extract base and target coords
-                    % basecoords = swc(baseid, :); targetcoords = swc(targetid, :);
-
-                    % p1 = swc{pairs(i, 1), 2:5};
                     p1 = swc{baseid, 2:5};
                     p2 = swc{targetid, 2:5};
-
                     x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
-
                     x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-
-                    % % set base xyzr
-                    % bx = basecoords(1); by = basecoords(2); bz = basecoords(3); br = basecoords(4);
-
-                    % % set target xyzr
-                    % tx = targetcoords(1); ty = targetcoords(2); tz = targetcoords(3); tr = targetcoords(4);
-
                     inside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2) | inside;
 
                 end
