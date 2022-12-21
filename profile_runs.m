@@ -24,7 +24,7 @@ end
 toc;
 
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.8);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 5);
 
 toc;
 tic;
@@ -44,17 +44,20 @@ close all;
 figure();
 hold on;
 [~, ~] = mainLoop(swc, zeros(boundSize), b, pairs);
-axis equal
+axis equal;
+view(3)
 %%
-clf
+hold on;
 tic;
 clc;
-for i = 1:20
+iter = 20000;
+for i = 1:10
     tic;
-    sim = random_walker_sim(LUT, A, pairs, boundSize, swc{:,:}, 1, 0);
-    sim = sim.eventloop(10000);
+
+    sim = random_walker_sim(LUT, A, pairs, boundSize, swc{:,:}, 0.1, 0,iter);
+    sim = sim.eventloop(iter);
     rwpath = sim.rwpath;
-    hold on;
+    rwpath = unique(rwpath,"rows","stable");
     h = plot3(rwpath(:, 2) + 1, rwpath(:, 1) + 1, rwpath(:, 3) + 1);
     if mod(i,5) == 0
         toc;

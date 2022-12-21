@@ -11,15 +11,16 @@ classdef random_walker_sim
         randomwalker;
         perm_prob;
         boundSize;
-        rwpath = [];
+        rwpath;
         steplen;
+        logical_alloc;
 
     end
 
     methods (Access = public)
 
         function obj = random_walker_sim(LUT, index_array, pairs, ...
-                bounds, swc, step_size, perm_prob)
+                bounds, swc, step_size, perm_prob, iter)
             %RANDOM_WALKER_SIM Construct an instance of this class
             %   Detailed explanation goes here
             obj.lookup_table = LUT;
@@ -29,24 +30,24 @@ classdef random_walker_sim
             obj.step_size = step_size;
             obj.perm_prob = perm_prob;
             obj.boundSize = bounds;
+            obj.logical_alloc = zeros(2, 1, "logical");
 
             obj.randomwalker = randomwalker(1, obj.step_size, bounds, ...
-                obj.swc, obj.lookup_table, obj.index_array, obj.pairs);
+                obj.swc, obj.lookup_table, obj.index_array, obj.pairs, iter);
         end
 
         function obj = eventloop(obj, iter)
             i = 1;
             obj.rwpath = zeros(iter, 3);
             obj.steplen = zeros(iter, 1);
-            
 
             while i <= iter
-                obj.steplen(i) = obj.step_size;
-                
 
-                % set random next position
+                obj.steplen(i) = obj.step_size;
+
                 obj.randomwalker.step = obj.step_size;
-                obj.randomwalker = obj.randomwalker.setnext();
+                % set random next position
+                obj.randomwalker = obj.randomwalker.setnext(i);
 
                 % get positions
                 current = obj.randomwalker.curr;
@@ -54,15 +55,20 @@ classdef random_walker_sim
 
                 % check positions
 
-                [obj,inside] = obj.checkpos(current, next, obj.swc, ...
+                [obj, inside] = obj.checkpos(current, next, obj.swc, ...
                 obj.lookup_table, obj.index_array, obj.pairs);
 
                 if inside
-                    %                     disp(obj.randomwalker.curr);
-                    obj.randomwalker.curr = obj.randomwalker.next;
-                    %                     disp(obj.randomwalker.curr);
+
+                    obj.randomwalker.curr = next;
+
                 else
-                    % disp("Curr Inside")
+                    % TODO implement this outcome:
+                    % ^ LIMIT STEP WHEN:
+                    % * crosses out
+                    % ^ ENABLE STEP WHEN:
+                    % * crosses in
+                    % * remains out
                 end
 
                 obj.rwpath(i, :) = obj.randomwalker.curr(:)';
@@ -71,7 +77,7 @@ classdef random_walker_sim
 
         end
 
-        function [obj,inside] = checkpos(obj, curr, next, swc, LUT, A, pairs)
+        function [obj, inside] = checkpos(obj, curr, next, swc, LUT, A, pairs)
             cvoxes = float2vox(curr);
             nvoxes = float2vox(next);
 
@@ -80,54 +86,38 @@ classdef random_walker_sim
                     all(all(cvoxes > 0)) && ...
                     all(all(nvoxes > 0))
 
-                cvoxes = float2vox(curr);
-
-                %             cvoxes = unique(cvoxes);
-
                 cvoxes = sub2ind(obj.boundSize, cvoxes(1, :), ...
-                cvoxes(2, :), cvoxes(3, :));
-
-                % checkvoxes correct
+                    cvoxes(2, :), cvoxes(3, :));
                 cindicies = LUT(cvoxes);
 
-                nvoxes = float2vox(next);
-                %             nvoxes = unique(nvoxes,"stable");
-                try
-                    nvoxes = sub2ind(obj.boundSize, nvoxes(1, :), nvoxes(2, :), nvoxes(3, :));
-
-                catch ME
-                    disp(ME);
-                end
-
-                % checkvoxes correct
+                nvoxes = sub2ind(obj.boundSize, nvoxes(1, :), ...
+                    nvoxes(2, :), nvoxes(3, :));
                 nindicies = LUT(nvoxes);
 
                 indicies = obj.combineinds(cindicies, nindicies);
 
-                % check lookup-table using subscripted index of [x y z]
-                %             indicies = LUT(pos(1), pos(2), pos(3));
-
                 if (indicies ~= 0)
 
-                    [obj,currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
+                    [obj, currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
 
+                    % both positions within a connection
                     if currinside && nextinside
-                        %                     disp("INSIDE: ");
                         inside = 1;
-                    elseif currinside && ~nextinside
-                        
-                        %                     disp("current in, next out");
-                        inside = 0;
-                    elseif ~currinside && ~nextinside
-                        obj.logit(indicies,A);
-                        scatter3(curr(2),curr(1),curr(3));
 
-%                         disp("RW Outside: ");
+                        % current pos in, next pos out
+                    elseif currinside && ~nextinside
                         inside = 0;
+
+                        % current pos out, next pos in
                     elseif ~currinside && nextinside
-                        obj.logit(indicies,A);
                         disp("RW Outside NextInside: ");
                         inside = 0;
+
+                        % both positions outside
+                    elseif ~currinside && ~nextinside
+                        disp("RW Outside: ");
+                        inside = 0;
+
                     else
                         disp("OUTSIDE: ")
                         inside = 0;
@@ -167,11 +157,14 @@ classdef random_walker_sim
                     end
 
                 else
+
+                    % TODO : currently ignoring the chance that some of the voxels are within.
+                    % If a single voxel crosses bounds of LUT we throw out step.
+                    % ~ SOLUTION remove filter voxes that are outside bounds.
+
                     inside = 0;
                     disp("NEEDS FIXING: randomwalker is inside range but step goes out");
                 end
-
-                % disp("OUTSIDE RANGE");
 
             end
 
@@ -210,36 +203,32 @@ classdef random_walker_sim
             parents = ps(:, 2);
 
             % for each pair: check if point is inside
+            % TODO: store previous inside or outside bool: this will reduce the number of connections checked
             for i = 1:length(children)
                 % get base and target ids
                 baseid = children(i); targetid = parents(i);
                 p1 = swc(baseid, 2:5);
                 p2 = swc(targetid, 2:5);
+
                 x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
                 x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-                tcn = pointbasedswc2v([x0 nx0], [y0 ny0], [z0 nz0], x1, x2, y1, y2, z1, z2, r1, r2);
-%                 if tcn(1) && tcn(2)
-%                    cdists = sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
-%                    cdists = min([r1,r2,cdists]);
-% %                    fid = fopen(fullfile('distslog.txt'), 'a');
-% %                     if fid == -1
-% %                       error('Cannot open log file.');
-% %                     end
-% %                     fprintf(fid,"%f\n",cdists);
-% %                     fclose(fid);
-%                     obj.step_size = cdists;
-%                 end
+
+                tcn = pointbasedswc2v([x0 nx0], [y0 ny0], [z0 nz0], x1, x2, y1, y2, z1, z2, r1, r2, obj.logical_alloc);
+
+                % inside ith connection or already inside
                 currinside = tcn(1) | currinside;
                 nextinside = tcn(2) | nextinside;
+
+                % if both positions are inside:
+                % break loop to stop extra iterations
                 if currinside && nextinside
-                   cdists = sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
-                   cdists = min([r1,r2,cdists]);
-                   obj.step_size = cdists/5;
-%                     disp("early exit: ");
+                    % adaptive stepsize
+                    cdists = sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
+                    cdists = min([r1, r2, cdists]);
+                    obj.step_size = cdists;
                     break;
                 end
 
-%                 nextinside = pointbasedswc2v(nx0, ny0, nz0, x1, x2, y1, y2, z1, z2, r1, r2) | nextinside;
             end
 
         end
@@ -264,31 +253,31 @@ classdef random_walker_sim
                 p2 = swc(targetid, 2:5);
                 x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
                 x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-                inside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2) | inside;
+                inside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, obj.logical_alloc) | inside;
             end
 
         end
 
-        function logit(obj, connections,A)
+        function logit(obj, connections, A)
             % get pairs from A
             pairlist = A{connections};
             ps = obj.pairs(pairlist, :);
 
             % pairlist => [child, parent]
-            children = ps(:, 1);
-            parents = ps(:, 2);
-            allnodes = unique([children;parents]);
-            fid = fopen(fullfile('YourLogFile.txt'), 'a');
-            if fid == -1
-              error('Cannot open log file.');
-            end
-%             fprintf(fid,"%s\n",datetime(now,0));
-            for i = 1:length(allnodes)
-                fprintf(fid,"%d\n",allnodes(i));
-            end
-%             fprintf(fid,"-------------------\n");
-            fclose(fid);
+            children = ps(:, 1); parents = ps(:, 2);
+            allnodes = unique([children; parents]);
 
+            fid = fopen(fullfile('YourLogFile.txt'), 'a');
+
+            if fid == -1
+                error('Cannot open log file.');
+            end
+
+            for i = 1:length(allnodes)
+                fprintf(fid, "%d\n", allnodes(i));
+            end
+
+            fclose(fid);
         end
 
     end

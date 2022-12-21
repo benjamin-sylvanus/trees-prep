@@ -1,10 +1,12 @@
 function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
     A = A;
-    swc = tree;
+    swc = tree{:,:};
 
     ecount = 0; prevElapse = 0; tic;
 
     for i = 1:size(pairs, 1)
+
+        % needs to be cell
         Bound = pairBounds{i, 1};
 
         Sx = Bound(1, 1); Sy = Bound(1, 2); Sz = Bound(1, 3);
@@ -14,11 +16,11 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
         [y0, x0, z0] = meshgrid(Sy:Ny, Sx:Nx, Sz:Nz);
         % pos_fill = ndSparse.build(range(Bound)+2);
 
-        p1 = swc{pairs(i, 1), 2:5};
+        p1 = swc(pairs(i, 1), 2:5);
 
         pair = swc(pairs(i, 2), :);
 
-        p2 = pair{1, 2:5};
+        p2 = pair(1, 2:5);
 
         x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
 
@@ -34,8 +36,6 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
 
         poses(i, :) = mxyz + [Sy Sx Sz];
 
-        hold on;
-
         try
             is = isosurface(pos, 0);
             sum(pos, "all");
@@ -44,23 +44,23 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
             p.FaceColor = 'green';
             p.FaceAlpha = 0.3;
             p.EdgeColor = 'none';
-            view(3);
-            axis tight;
+%             view(3);
+%             axis tight;
 
-%             [Y, X, Z]= sphere(16);
-%             x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
-%             X2 = X * r1; Y2 = Y * r1; Z2 = Z * r1;
-%             h = surf(Y2 + y1,X2 + x1,Z2 + z1);
-%             h.FaceAlpha=0.05;
-%             h.EdgeColor="none";
-%             h.FaceColor = 'blue';
-%         
-%             x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-%             X2 = X * r2; Y2 = Y * r2; Z2 = Z * r2;
-%             h = surf(Y2 + y2,X2 + x2,Z2 + z2);
-%             h.FaceAlpha = 0.05;
-%             h.EdgeColor="none";
-%             h.FaceColor = 'red';
+            %             [Y, X, Z]= sphere(16);
+            %             x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
+            %             X2 = X * r1; Y2 = Y * r1; Z2 = Z * r1;
+            %             h = surf(Y2 + y1,X2 + x1,Z2 + z1);
+            %             h.FaceAlpha=0.05;
+            %             h.EdgeColor="none";
+            %             h.FaceColor = 'blue';
+            %
+            %             x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
+            %             X2 = X * r2; Y2 = Y * r2; Z2 = Z * r2;
+            %             h = surf(Y2 + y2,X2 + x2,Z2 + z2);
+            %             h.FaceAlpha = 0.05;
+            %             h.EdgeColor="none";
+            %             h.FaceColor = 'red';
         catch ME
         end
 
