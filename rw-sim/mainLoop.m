@@ -46,6 +46,21 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
             p.EdgeColor = 'none';
             view(3);
             axis tight;
+
+%             [Y, X, Z]= sphere(16);
+%             x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
+%             X2 = X * r1; Y2 = Y * r1; Z2 = Z * r1;
+%             h = surf(Y2 + y1,X2 + x1,Z2 + z1);
+%             h.FaceAlpha=0.05;
+%             h.EdgeColor="none";
+%             h.FaceColor = 'blue';
+%         
+%             x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
+%             X2 = X * r2; Y2 = Y * r2; Z2 = Z * r2;
+%             h = surf(Y2 + y2,X2 + x2,Z2 + z2);
+%             h.FaceAlpha = 0.05;
+%             h.EdgeColor="none";
+%             h.FaceColor = 'red';
         catch ME
         end
 

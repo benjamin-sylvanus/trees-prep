@@ -1,13 +1,27 @@
 % Replaced Calulation for r comparison
 function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2)
+    if r2 > r1
+        pos = pointbasedswc2v(x0, y0, z0, x2, x1, y2, y1, z2, z1, r2, r1);
+    else
+
     t = ((x0 - x1) * (x2 - x1) + (y0 - y1) * (y2 - y1) + (z0 - z1) * (z2 - z1)) ./ ...
         ((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
     x = x1 + (x2 - x1) * t;
     y = y1 + (y2 - y1) * t;
     z = z1 + (z2 - z1) * t;
+    lminit = zeros(size(x0), "logical");
 
-    list1 = (x - x1) .* (x - x2) + (y - y1) .* (y - y2) + (z - z1) .* (z - z2) < 0;
-    list2 = ~list1;
+   if sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2) < r1
+            list1 = lminit;
+            list2 = ~list1;
+    else
+        list1 = (x - x1) .* (x - x2) + (y - y1) .* (y - y2) + (z - z1) .* (z - z2) < 0;
+        list2 = ~ list1;
+
+    end
+
+%     list1 = (x - x1) .* (x - x2) + (y - y1) .* (y - y2) + (z - z1) .* (z - z2) < 0;
+%     list2 = ~list1;
 
     dist2 = (x0 - x) .^ 2 + (y0 - y) .^ 2 + (z0 - z) .^ 2;
 
@@ -18,9 +32,7 @@ function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2)
 
     %     c = ( |r1 - r2| * l ) / L
 
-    if r2 > r1
-        pos = swc2v(x0, y0, z0, x2, x1, y2, y1, z2, z1, r2, r1);
-    else
+
 
         rd = abs(r1 - r2);
 
@@ -37,10 +49,11 @@ function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2)
         pos2 = (((x0 - x1) .^ 2 + (y0 - y1) .^ 2 + (z0 - z1) .^ 2) <= (r1 ^ 2)) | ...
             (((x0 - x2) .^ 2 + (y0 - y2) .^ 2 + (z0 - z2) .^ 2) <= (r2 ^ 2));
         %         pos = ndSparse.build(size(x0)); % use false
-        pos = zeros(size(x0), "logical");
+        pos = lminit;
 
         pos(list1) = pos1(list1);
         pos(list2) = pos2(list2);
+        
     end
 
 end

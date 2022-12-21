@@ -23,16 +23,39 @@ zz_test_tmp;
 clc; clearvars; close all;
 tic;
 addpath(genpath("./"));
-swc = read_t('oneconn.swc');
+swc = read_t('exampleTree.swc');
 NodeID = swc(:, 1); Coords = swc(:, 3:5);
 Radii = swc(:, 6); Parents = swc(:, 7);
 
 tree = table(NodeID, Coords(:, 1), Coords(:, 2), Coords(:, 3), ...
     Radii, Parents, 'VariableNames', ...
     {'NodeId', 'X', 'Y', 'Z', 'Radii', 'Parent'});
-save("tree.mat", "tree");
+
+
+
+g = graph(NodeID(2:end),Parents(2:end),1,string(1:length(Parents)));
 
 %%
+sg = shortestpathtree(g,[243, 252, 257, 260, 267],267);
+swc(unique(str2double(sg.Edges.EndNodes)));
+save("tree.mat", "tree");
+unique(str2double(sg.Edges.EndNodes));
+sg1 = subgraph(g,unique(str2double(sg.Edges.EndNodes)));
+newnames = string(1:height(sg1.Nodes))';
+sg1.Nodes.Name = newnames;
+
+
+
+
+
+
+
+
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 clearvars; clc;
 tic;
 load("tree.mat", "tree");
@@ -43,9 +66,9 @@ for i = 2:height(tree)
 end
 
 toc;
-%%
+
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.05);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 1);
 
 toc;
 % addpath(genpath(['/Users/benjaminsylvanus/Documents/GitHub/' ...
@@ -57,45 +80,7 @@ toc;
 A = A(~cellfun('isempty', A));
 sizes = cellfun('size', A, 1);
 
-% %%
-% rw = randomwalker(1,1,boundSize,swc, LUT, A, pairs);
-%
-% % to verify inside visually
-% inds = pairs(A{LUT(rw.curr(1), rw.curr(2),rw.curr(3))},:);
-%
-% % pairlist => [child, parent]
-% children = inds(:, 1);
-% parents = inds(:, 2);
-% [X, Y, Z]= sphere(16);
-% clf;
-% hold on;
-%
-% % for each pair: check if point is inside
-% for i = 1:length(children)
-%
-%     % get base and target ids
-%     baseid = children(i); targetid = parents(i);
-%
-%     % p1 = swc{pairs(i, 1), 2:5};
-%     p1 = swc{baseid, 2:5}; p2 = swc{targetid, 2:5};
-%
-%     x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
-%     X2 = X * r1; Y2 = Y * r1; Z2 = Z * r1;
-%     h = surf(X2 + x1,Y2 + y1,Z2 + z1);
-%     h.FaceAlpha=0.05;
-%     h.EdgeColor="none";
-%     h.FaceColor = 'red';
-%
-%     x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-%     X2 = X * r2; Y2 = Y * r2; Z2 = Z * r2;
-%     h = surf(X2 + x2,Y2 + y2,Z2 + z2);
-%     h.FaceAlpha = 0.05;
-%     h.EdgeColor="none";
-%     h.FaceColor = 'red';
-% end
-% X2 = X * 0.1; Y2 = Y * 0.1; Z2 = Z * 0.1;
-% h = surf(X2 + rw.curr(1),Y2 + rw.curr(2),Z2 + rw.curr(3));
-% h.FaceColor = "blue";
+
 
 %%
 
@@ -106,26 +91,31 @@ sizes = cellfun('size', A, 1);
 % least semantic correlation to user query.
 % use cos similarity
 
+
+
 close all;
 figure();
 hold on;
 [~, ~] = mainLoop(swc, zeros(boundSize), b, pairs);
 axis equal
-
-for i = 1:5
-
-    sim = random_walker_sim(LUT, A, pairs, boundSize, swc, 1, 0);
+%%
+tic;
+for i = 1:2
     tic;
-    sim = sim.eventloop(5000);
-    toc;
-
+    sim = random_walker_sim(LUT, A, pairs, boundSize, swc, 1, 0);
+    sim = sim.eventloop(10000);
     rwpath = sim.rwpath;
     hold on;
-    plot3(rwpath(:, 2) + 1, rwpath(:, 1) + 1, rwpath(:, 3) + 1);
+    h = plot3(rwpath(:, 2) + 1, rwpath(:, 1) + 1, rwpath(:, 3) + 1);
+    h.Color = 'k';
+    toc;
 end
+toc;
+
+axis equal;
 
 %% To PLOT
-close all;
+% close all;
 figure();
 hold on;
 [C, poses] = mainLoop(swc, zeros(boundSize), b, pairs);
@@ -469,3 +459,43 @@ end
 % catch
 % end
 % end
+
+% %%
+% rw = randomwalker(1,1,boundSize,swc, LUT, A, pairs);
+%
+% % to verify inside visually
+% inds = pairs(A{LUT(rw.curr(1), rw.curr(2),rw.curr(3))},:);
+%
+% % pairlist => [child, parent]
+% children = inds(:, 1);
+% parents = inds(:, 2);
+% [X, Y, Z]= sphere(16);
+% clf;
+% hold on;
+%
+% % for each pair: check if point is inside
+% for i = 1:length(children)
+%
+%     % get base and target ids
+%     baseid = children(i); targetid = parents(i);
+%
+%     % p1 = swc{pairs(i, 1), 2:5};
+%     p1 = swc{baseid, 2:5}; p2 = swc{targetid, 2:5};
+%
+%     x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
+%     X2 = X * r1; Y2 = Y * r1; Z2 = Z * r1;
+%     h = surf(X2 + x1,Y2 + y1,Z2 + z1);
+%     h.FaceAlpha=0.05;
+%     h.EdgeColor="none";
+%     h.FaceColor = 'red';
+%
+%     x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
+%     X2 = X * r2; Y2 = Y * r2; Z2 = Z * r2;
+%     h = surf(X2 + x2,Y2 + y2,Z2 + z2);
+%     h.FaceAlpha = 0.05;
+%     h.EdgeColor="none";
+%     h.FaceColor = 'red';
+% end
+% X2 = X * 0.1; Y2 = Y * 0.1; Z2 = Z * 0.1;
+% h = surf(X2 + rw.curr(1),Y2 + rw.curr(2),Z2 + rw.curr(3));
+% h.FaceColor = "blue";

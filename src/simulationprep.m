@@ -19,9 +19,13 @@ end
 cd ('/Users/bensylvanus/Desktop/code/work/trees-prep/')
 
 %%
-clearvars;
+
+clearvars; start_trees;
+
 load("t.mat");
-rt = resample_tree(t{10}, 2000, '-s -d');
+
+%%
+rt = resample_tree(t{33}, 2000, '-s -d');
 swc_tree(rt, 'exampleTree.swc');
 %%
 lens = len_tree(t{1, 1});

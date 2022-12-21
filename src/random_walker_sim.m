@@ -12,6 +12,7 @@ classdef random_walker_sim
         perm_prob;
         boundSize;
         rwpath = [];
+        steplen;
 
     end
 
@@ -36,9 +37,15 @@ classdef random_walker_sim
         function obj = eventloop(obj, iter)
             i = 1;
             obj.rwpath = zeros(iter, 3);
+            obj.steplen = zeros(iter, 1);
+            
 
             while i <= iter
+                obj.steplen(i) = obj.step_size;
+                
+
                 % set random next position
+                obj.randomwalker.step = obj.step_size;
                 obj.randomwalker = obj.randomwalker.setnext();
 
                 % get positions
@@ -47,7 +54,7 @@ classdef random_walker_sim
 
                 % check positions
 
-                [inside] = obj.checkpos(current, next, obj.swc, ...
+                [obj,inside] = obj.checkpos(current, next, obj.swc, ...
                 obj.lookup_table, obj.index_array, obj.pairs);
 
                 if inside
@@ -64,7 +71,7 @@ classdef random_walker_sim
 
         end
 
-        function inside = checkpos(obj, curr, next, swc, LUT, A, pairs)
+        function [obj,inside] = checkpos(obj, curr, next, swc, LUT, A, pairs)
             cvoxes = float2vox(curr);
             nvoxes = float2vox(next);
 
@@ -102,18 +109,23 @@ classdef random_walker_sim
 
                 if (indicies ~= 0)
 
-                    [currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
+                    [obj,currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
 
                     if currinside && nextinside
                         %                     disp("INSIDE: ");
                         inside = 1;
                     elseif currinside && ~nextinside
+                        
                         %                     disp("current in, next out");
                         inside = 0;
                     elseif ~currinside && ~nextinside
-                        disp("RW Outside: ");
+                        obj.logit(indicies,A);
+                        scatter3(curr(2),curr(1),curr(3));
+
+%                         disp("RW Outside: ");
                         inside = 0;
                     elseif ~currinside && nextinside
+                        obj.logit(indicies,A);
                         disp("RW Outside NextInside: ");
                         inside = 0;
                     else
@@ -182,7 +194,7 @@ classdef random_walker_sim
 
         end
 
-        function [currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next)
+        function [obj, currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next)
             x0 = curr(1); y0 = curr(2); z0 = curr(3);
             nx0 = next(1); ny0 = next(2); nz0 = next(3);
 
@@ -201,12 +213,33 @@ classdef random_walker_sim
             for i = 1:length(children)
                 % get base and target ids
                 baseid = children(i); targetid = parents(i);
-                p1 = swc{baseid, 2:5};
-                p2 = swc{targetid, 2:5};
+                p1 = swc(baseid, 2:5);
+                p2 = swc(targetid, 2:5);
                 x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
                 x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-                currinside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2) | currinside;
-                nextinside = pointbasedswc2v(nx0, ny0, nz0, x1, x2, y1, y2, z1, z2, r1, r2) | nextinside;
+                tcn = pointbasedswc2v([x0 nx0], [y0 ny0], [z0 nz0], x1, x2, y1, y2, z1, z2, r1, r2);
+%                 if tcn(1) && tcn(2)
+%                    cdists = sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
+%                    cdists = min([r1,r2,cdists]);
+% %                    fid = fopen(fullfile('distslog.txt'), 'a');
+% %                     if fid == -1
+% %                       error('Cannot open log file.');
+% %                     end
+% %                     fprintf(fid,"%f\n",cdists);
+% %                     fclose(fid);
+%                     obj.step_size = cdists;
+%                 end
+                currinside = tcn(1) | currinside;
+                nextinside = tcn(2) | nextinside;
+                if currinside && nextinside
+                   cdists = sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
+                   cdists = min([r1,r2,cdists]);
+                   obj.step_size = cdists/5;
+%                     disp("early exit: ");
+                    break;
+                end
+
+%                 nextinside = pointbasedswc2v(nx0, ny0, nz0, x1, x2, y1, y2, z1, z2, r1, r2) | nextinside;
             end
 
         end
@@ -227,12 +260,34 @@ classdef random_walker_sim
             for i = 1:length(children)
                 % get base and target ids
                 baseid = children(i); targetid = parents(i);
-                p1 = swc{baseid, 2:5};
-                p2 = swc{targetid, 2:5};
+                p1 = swc(baseid, 2:5);
+                p2 = swc(targetid, 2:5);
                 x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
                 x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
                 inside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2) | inside;
             end
+
+        end
+
+        function logit(obj, connections,A)
+            % get pairs from A
+            pairlist = A{connections};
+            ps = obj.pairs(pairlist, :);
+
+            % pairlist => [child, parent]
+            children = ps(:, 1);
+            parents = ps(:, 2);
+            allnodes = unique([children;parents]);
+            fid = fopen(fullfile('YourLogFile.txt'), 'a');
+            if fid == -1
+              error('Cannot open log file.');
+            end
+%             fprintf(fid,"%s\n",datetime(now,0));
+            for i = 1:length(allnodes)
+                fprintf(fid,"%d\n",allnodes(i));
+            end
+%             fprintf(fid,"-------------------\n");
+            fclose(fid);
 
         end
 
