@@ -235,7 +235,7 @@ classdef random_walker_sim
             x0 = curr(1); y0 = curr(2); z0 = curr(3);
             nx0 = next(1); ny0 = next(2); nz0 = next(3);
 
-            if isboolean(obj.currstate)
+            if islogical(obj.currstate)
                 currinside = obj.currstate;
             else
                 currinside = false;
