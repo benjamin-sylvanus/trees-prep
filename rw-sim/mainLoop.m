@@ -1,6 +1,6 @@
 function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
     A = A;
-    swc = tree{:,:};
+    swc = tree{:, :};
 
     ecount = 0; prevElapse = 0; tic;
 
@@ -11,7 +11,7 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
 
         Sx = Bound(1, 1); Sy = Bound(1, 2); Sz = Bound(1, 3);
 
-        Nx = Bound(2, 1) + 1; Ny = Bound(2, 2) + 1; Nz = Bound(2, 3) + 1;
+        Nx = Bound(2, 1); Ny = Bound(2, 2); Nz = Bound(2, 3);
 
         [y0, x0, z0] = meshgrid(Sy:Ny, Sx:Nx, Sz:Nz);
         % pos_fill = ndSparse.build(range(Bound)+2);
@@ -36,16 +36,17 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
 
         poses(i, :) = mxyz + [Sy Sx Sz];
 
-        try
-            is = isosurface(pos, 0);
+        if sum(pos, "all") > 0
+            is = isosurface(y0, x0, z0, pos, 0);
+
             sum(pos, "all");
-            is.vertices = is.vertices + [Sy Sx Sz];
+            %             is.vertices = is.vertices + [Sy Sx Sz];
             p = patch('Faces', is.faces, 'Vertices', is.vertices);
             p.FaceColor = 'green';
-            p.FaceAlpha = 0.3;
+            p.FaceAlpha = 0.05;
             p.EdgeColor = 'none';
-%             view(3);
-%             axis tight;
+            %             view(3);
+            %             axis tight;
 
             %             [Y, X, Z]= sphere(16);
             %             x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
@@ -61,7 +62,6 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
             %             h.FaceAlpha = 0.05;
             %             h.EdgeColor="none";
             %             h.FaceColor = 'red';
-        catch ME
         end
 
         A(Sx:Nx, Sy:Ny, Sz:Nz) = pos_fill | pos;
