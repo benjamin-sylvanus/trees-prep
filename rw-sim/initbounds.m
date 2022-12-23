@@ -16,10 +16,10 @@ function [b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, voxelScale)
     VSIZE = voxelScale * min(dists(2:end));
 
     % Translate X,Y,Z
-    tran = ((dim - ranges(1, :)) ./ VSIZE) + 1;
+    tran = ((dim - ranges(1, :)) ./ VSIZE) + 3;
 
     % Update Bounds
-    boundSize = ceil((ranges(2, :) - ranges(1, :)) ./ VSIZE) + 2;
+    boundSize = ceil((ranges(2, :) - ranges(1, :)) ./ VSIZE) + 6;
 
     % Radii Scale
     R = swc.Radii ./ (VSIZE);
@@ -43,7 +43,7 @@ function [b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, voxelScale)
         mr = vs;
         pairs = [];
 
-        for i = 1:size(swc,1)
+        for i = 1:size(swc, 1)
             % extract parent id
             pair = swc(swc(i, 6), :);
 
@@ -61,8 +61,8 @@ function [b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, voxelScale)
             % ri: pair radii
             % pxi: pair coords
 
-            ri = [p1(1,5); p2(1,5)];
-            pxi = [p1(1, 2:4); p2(1, 2:4)];
+            ri = [p1(1, 5); p2(1, 5)];
+            pxi = [p1(1, 2:4) - 1; p2(1, 2:4) + 1];
             b = {[round(min(pxi - ri)); ceil(max(pxi + ri))]};
             ba = [min(pi - (ri + m)), max(pi + (ri + m))];
         end
