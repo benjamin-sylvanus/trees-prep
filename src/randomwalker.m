@@ -37,11 +37,13 @@ classdef randomwalker
 
                     x0 = pos(1); y0 = pos(2); z0 = pos(3);
 
-                    bx = ~ismember(x0,42:55); 
-                    by = ~ismember(y0,42:55); 
-                    bz = ~ismember(z0,10:35);
-                    bcombined = bx |  by | bz;
-                    if inside(1) && bcombined
+%                     bx = ~ismember(x0,42:55); 
+%                     by = ~ismember(y0,42:55); 
+%                     bz = ~ismember(z0,10:35);
+%                     bcombined = bx |  by | bz;
+% 
+%                     if inside(1) && bcombined
+                    if inside(1) 
                         outside = false;
                     end
 

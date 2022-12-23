@@ -9,7 +9,6 @@ tree = table(NodeID, Coords(:, 1), Coords(:, 2), Coords(:, 3), ...
     Radii, Parents, 'VariableNames', ...
     {'NodeId', 'X', 'Y', 'Z', 'Radii', 'Parent'});
 
-
 save("tree.mat", "tree");
 
 clearvars; clc;
@@ -24,7 +23,7 @@ end
 toc;
 
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 5);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 3);
 
 toc;
 tic;
@@ -42,28 +41,25 @@ change swc to matrix
 %%
 close all;
 figure();
-hold on;
+hold on;  
 [~, ~] = mainLoop(swc, zeros(boundSize), b, pairs);
 axis equal;
 view(3)
-%%
+
 hold on;
 tic;
 clc;
-iter = 20000;
-for i = 1:10
+iter = 5000;
+for i = 1:5
     tic;
-
     sim = random_walker_sim(LUT, A, pairs, boundSize, swc{:,:}, 0.1, 0,iter);
     sim = sim.eventloop(iter);
     rwpath = sim.rwpath;
     rwpath = unique(rwpath,"rows","stable");
-    h = plot3(rwpath(:, 2) + 1, rwpath(:, 1) + 1, rwpath(:, 3) + 1);
-    if mod(i,5) == 0
-        toc;
-    end
-    fprintf("%12.0f\n",size(unique(rwpath,"rows"),1));
-    pause(0.1);
+    h = plot3(rwpath(:, 2) , rwpath(:, 1) , rwpath(:, 3) );
+    tim = toc;
+    fprintf("%12.0f\t%f\n",size(unique(rwpath,"rows"),1),tim);
+%     pause(0.1);
 end
 toc;
 

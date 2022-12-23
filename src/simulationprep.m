@@ -25,7 +25,12 @@ clearvars; start_trees;
 load("t.mat");
 
 %%
-rt = resample_tree(t{33}, 2000, '-s -d');
+close all;
+rt = resample_tree(t{33}, 2000, '-s');
+% rt.D(rt.D>4000) = 4000;
+figure
+hist(rt.D);
+%%
 swc_tree(rt, 'exampleTree.swc');
 %%
 lens = len_tree(t{1, 1});
@@ -38,19 +43,3 @@ figure();
 hist(lens, 5);
 figure;
 hist(len_tree(rt), 5);
-
-%%
-close all;
-
-for i = 1:5
-    tic;
-    figure();
-    rt = resample_tree(t{i, 1}, 100, '-s -d');
-    toc;
-    figure();
-    title(names{i});
-    figure();
-    s1 = stats_tree(t{i, 1});
-    figure();
-    s2 = stats_tree(rt);
-end
