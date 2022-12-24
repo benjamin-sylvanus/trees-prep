@@ -43,7 +43,7 @@ classdef randomwalker
 %                     bcombined = bx |  by | bz;
 % 
 %                     if inside(1) && bcombined
-                    if inside(1) 
+                      if inside(1)
                         outside = false;
                     end
 
