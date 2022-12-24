@@ -18,11 +18,7 @@ function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, empty
         else
             list1 = (x - x1) .* (x - x2) + (y - y1) .* (y - y2) + (z - z1) .* (z - z2) < 0;
             list2 = ~list1;
-
         end
-
-        %     list1 = (x - x1) .* (x - x2) + (y - y1) .* (y - y2) + (z - z1) .* (z - z2) < 0;
-        %     list2 = ~list1;
 
         dist2 = (x0 - x) .^ 2 + (y0 - y) .^ 2 + (z0 - z) .^ 2;
 
@@ -47,7 +43,7 @@ function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, empty
         pos1 = dist2 < (r .^ 2); % smaller in one line and less than and equal
         pos2 = (((x0 - x1) .^ 2 + (y0 - y1) .^ 2 + (z0 - z1) .^ 2) < ((r1 - eps) ^ 2)) | ...
             (((x0 - x2) .^ 2 + (y0 - y2) .^ 2 + (z0 - z2) .^ 2) < ((r2 - eps) ^ 2));
-        %         pos = ndSparse.build(size(x0)); % use false
+
         pos = lminit;
 
         pos(list1) = pos1(list1);

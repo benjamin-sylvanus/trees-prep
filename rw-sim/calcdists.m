@@ -1,5 +1,4 @@
 function d = calcdists(tree, i)
-
     cxyz = tree{i, ["X", "Y", "Z"]};
     parentId = tree{i, "Parent"};
     pxyz = tree{parentId, ["X", "Y", "Z"]};
