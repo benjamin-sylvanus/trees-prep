@@ -33,6 +33,7 @@ classdef random_walker_sim
             obj.perm_prob = perm_prob;
             obj.boundSize = bounds;
             obj.logical_alloc = zeros(2, 1, "logical");
+
             obj.voxels = cell(iter, 2);
 
             obj.randomwalker = randomwalker(1, obj.step_size, bounds, ...
@@ -57,7 +58,6 @@ classdef random_walker_sim
                 next = obj.randomwalker.next;
 
                 % check positions
-
                 [obj, inside] = obj.checkpos(current, next, obj.swc, ...
                 obj.lookup_table, obj.index_array, obj.pairs, i);
 
@@ -65,6 +65,11 @@ classdef random_walker_sim
                     obj.randomwalker.curr = next;
                     obj.currstate = true;
                 else
+
+                    if (rand < obj.perm_prob)
+                        obj.randomwalker.curr = next;
+                        obj.currstate = false;
+                    end
                     % TODO implement this outcome:
                     % ^ LIMIT STEP WHEN:
                     % * crosses out
@@ -80,131 +85,17 @@ classdef random_walker_sim
         end
 
         function [obj, inside] = checkpos(obj, curr, next, swc, LUT, A, pairs, i)
-            cvoxes = float2vox(curr);
-            nvoxes = float2vox(next);
 
-            zero_cv = cvoxes > 0;
-            max_cv = cvoxes < obj.boundSize;
-            zero_nv = nvoxes > 0;
-            max_nv = nvoxes < obj.boundSize;
-
-            cv = (zero_cv & max_cv);
-            nv = (zero_nv & max_nv);
-
-            % combine columns
-            combcv = cv(:, 1) & cv(:, 2) & cv(:, 3);
-            combnv = nv(:, 1) & nv(:, 2) & nv(:, 3);
-
-            CVOXES = cvoxes(combcv, :)';
-            NVOXES = nvoxes(combnv, :)';
-
-            % CVOXES and NVOXES are always valid indicies
-
-            %             if all(cvoxes <= obj.boundSize) && ...
-            %                     all(nvoxes <= obj.boundSize) && ...
-            %                     all(cvoxes > 0) && ...
-            %                     all(nvoxes > 0)
-
-            CVOXES = sub2ind(obj.boundSize, CVOXES(1, :), ...
-            CVOXES(2, :), CVOXES(3, :));
-            cindicies = LUT(CVOXES);
-
-            NVOXES = sub2ind(obj.boundSize, NVOXES(1, :), ...
-                NVOXES(2, :), NVOXES(3, :));
-            nindicies = LUT(NVOXES);
-
-            cindicies = cindicies(cindicies > 0);
-
-            indicies = obj.combineinds(cindicies', nindicies');
-
-            if i > 2
-                indicies = obj.combineinds(indicies, obj.voxels{i - 1, 1}');
-                indicies = obj.combineinds(indicies, obj.voxels{i - 1, 2}');
-            end
-
-            obj.voxels{i, 1} = CVOXES;
-            obj.voxels{i, 2} = NVOXES;
+            indicies = obj.preprocesses(curr,next);
 
             if (indicies ~= 0)
 
                 [obj, currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
 
-                % both positions within a connection
-                if currinside && nextinside
-                    inside = 1;
-                    %                     disp("Was just inside")
-
-                    % current pos in, next pos out
-                elseif currinside && ~nextinside
-                    %                     disp("next_outside")
-                    inside = 0;
-
-                    if i > 1
-                        obj.voxels{i, 1} = obj.voxels{i - 1, 1};
-                        obj.voxels{i, 2} = obj.voxels{i - 1, 2};
-                    end
-
-                    % current pos out, next pos in
-                elseif ~currinside && nextinside
-
-                    %                     disp("RW Outside NextInside: ");
-                    inside = 0;
-
-                    % both positions outside
-                elseif ~currinside && ~nextinside
-                    disp("RW Outside: ");
-                    scatter3(curr(2), curr(1), curr(3));
-
-                    inside = 0;
-                else
-                    disp("OUTSIDE: ")
-                    inside = 0;
-                end
-
+                inside = obj.insideLogic(currinside,nextinside);
             else
                 inside = 0;
             end
-
-            %             else
-            %                 % if the step exits the bounds: check rw inside cell
-            %                 if all(all(cvoxes <= obj.boundSize')) && all(all(cvoxes > 0))
-            %                     cvoxes = float2vox(curr);
-            %                     cvoxes = sub2ind(obj.boundSize, cvoxes(1, :), ...
-            %                         cvoxes(2, :), cvoxes(3, :));
-            %                     % checkvoxes correct
-            %                     cindicies = LUT(cvoxes);
-            %                     indicies = obj.combineinds(cindicies, cindicies);
-            %
-            %                     if (indicies ~= 0)
-            %                         currinside = checkone_connection(obj, indicies, A, swc, curr);
-            %
-            %                         if currinside
-            %                             % if there was a conn but rw is inside cell
-            %                             % prevent step.
-            %                             inside = 0;
-            %                         else
-            %                             % if there was a connection and rw is outside
-            %                             % then step is allowed
-            %                             inside = 1;
-            %                         end
-            %
-            %                     else
-            %                         % if the were no connections, rw is outside and
-            %                         % should be allowed to step.
-            %                         inside = 1;
-            %                     end
-            %
-            %                 else
-            %
-            %                     % TODO : currently ignoring the chance that some of the voxels are within.
-            %                     % If a single voxel crosses bounds of LUT we throw out step.
-            %                     % ~ SOLUTION remove filter voxes that are outside bounds.
-            %
-            %                     inside = 0;
-            %                     disp("NEEDS FIXING: randomwalker is inside range but step goes out");
-            %                 end
-            %
-            %             end
 
         end
 
@@ -329,6 +220,69 @@ classdef random_walker_sim
 
             fclose(fid);
         end
+
+        function linearArray = rowOp(obj,row)
+
+        end
+
+
+        function indicies = preprocesses(obj,curr,next)
+            LUT = obj.lookup_table;
+            % convert float to voxel
+
+            cvoxes = float2vox(curr); nvoxes = float2vox(next);
+
+            cv = all(cvoxes > 0,2) & all(cvoxes < obj.boundSize,2);
+            nv = all(nvoxes > 0,2) & all(nvoxes < obj.boundSize,2);
+
+            CVOXES = cvoxes(cv, :)';
+            NVOXES = nvoxes(nv, :)';
+
+            % CVOXES and NVOXES are always valid indicies
+
+            CVOXES = sub2ind(obj.boundSize, CVOXES(1, :), ...
+            CVOXES(2, :), CVOXES(3, :));
+            cindicies = LUT(CVOXES);
+
+            NVOXES = sub2ind(obj.boundSize, NVOXES(1, :), ...
+                NVOXES(2, :), NVOXES(3, :));
+            nindicies = LUT(NVOXES);
+
+            cindicies = cindicies(cindicies > 0);
+
+            indicies = obj.combineinds(cindicies', nindicies');
+
+        end
+
+        function inside = insideLogic(obj,currinside,nextinside)
+                % both positions within a connection
+                if currinside && nextinside
+                    inside = 1;
+                    % disp("Was just inside")
+
+                    % current pos in, next pos out
+                elseif currinside && ~nextinside
+                    % disp("next_outside")
+                    inside = 0;
+
+                    % current pos out, next pos in
+                elseif ~currinside && nextinside
+
+                    disp("RW Outside NextInside: ");
+                    inside = 0;
+
+                    % both positions outside
+                elseif ~currinside && ~nextinside
+                    disp("RW Outside: ");
+%                     scatter3(curr(2), curr(1), curr(3));
+
+                    inside = 0;
+                else
+                    disp("OUTSIDE: ")
+                    inside = 0;
+                end
+        end
+
 
     end
 

@@ -1,6 +1,6 @@
 clc; clearvars; close all;
 tic;
-addpath(genpath("./"));
+addpath(genpath("../"));
 swc = read_t('exampleTree.swc');
 NodeID = swc(:, 1); Coords = swc(:, 3:5);
 Radii = swc(:, 6); Parents = swc(:, 7);
@@ -49,7 +49,7 @@ view(3)
 hold on;
 tic;
 clc;
-iter = 10000;
+iter = 1000;
 for i = 1:10
     tic;
     sim = random_walker_sim(LUT, A, pairs, boundSize, swc{:,:}, 0.1, 0,iter);
