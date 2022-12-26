@@ -2,3 +2,4 @@
 *.asv
 *.txt
 .vscode/settings.json
+*.swc
