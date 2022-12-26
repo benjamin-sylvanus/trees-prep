@@ -32,7 +32,7 @@ function [A, indicies, t2, LUT] = generateLUT(B, b)
 
                 % Add size to array
                 if la > size(A, 1)
-                    A = [A; cell(100000, 1)];
+                    A = [A; cell(500000, 1)];
                 end
 
                 if la < size(A, 1)
