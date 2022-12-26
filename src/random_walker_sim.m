@@ -44,15 +44,9 @@ classdef random_walker_sim
         function obj = eventloop(obj, iter)
             i = 1;
             obj.rwpath = zeros(iter, 3);
-            % obj.steplen = zeros(iter, 1);
             obj.randomwalker.step = obj.step_size;
 
             while i <= iter
-
-                % init step_size
-                % obj.steplen(i) = obj.step_size;
-                % obj.randomwalker.step = obj.step_size;
-                % set random next position
 
                 obj.randomwalker = obj.randomwalker.setnext(i);
 
@@ -157,15 +151,6 @@ classdef random_walker_sim
 
             children = A{indicies, 1};
             parents = A{indicies, 2};
-
-            %             % get pairs from A
-            %             pairlist = A{indicies};
-            %             ps = obj.pairs(pairlist, :);
-            %
-            %             % pairlist => [child, parent]
-            %             children = ps(:, 1);
-            %             parents = ps(:, 2);
-
             % for each pair: check if point is inside
             for i = 1:length(children)
                 % get base and target ids
@@ -199,14 +184,6 @@ classdef random_walker_sim
 
             children = A{indicies, 1};
             parents = A{indicies, 2};
-
-            %             % get pairs from A
-            %             pairlist = A{indicies};
-            %             ps = obj.pairs(pairlist, :);
-            %
-            %             % pairlist => [child, parent]
-            %             children = ps(:, 1);
-            %             parents = ps(:, 2);
 
             % for each pair: check if point is inside
             for i = 1:length(children)
