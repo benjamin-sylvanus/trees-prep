@@ -1,6 +1,5 @@
-<img width="1138" alt="neuron_img" src="https://user-images.githubusercontent.com/46076747/209508271-8afe5961-a7e7-4a80-afa3-ecbe90d60003.png">
 # trees-prep
-
+<img width="1200" alt="neuron_img" src="https://user-images.githubusercontent.com/46076747/209508271-8afe5961-a7e7-4a80-afa3-ecbe90d60003.png">
 ## rwsim
 
 - Modified implementation of lookup table for realistic voxelized geometries of neuron skeletons
