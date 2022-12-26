@@ -62,21 +62,22 @@ figure();
 hold on;
 [~, ~] = mainLoop(swc, zeros(boundSize), b, pairs);
 axis equal;
-view(3)
-%%
+view(3);
 hold on;
+
 tic;
 clc;
-iter = 10000;
-for i = 1:10
+iter = 1000;
+tic;
+for i = 1:5
     tic;
-    sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 0.5, 0, iter, true);
+    sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 2, 0, iter, true);
     sim = sim.eventloop(iter);
     rwpath = sim.rwpath;
     rwpath = unique(rwpath, "rows", "stable");
-    h = plot3([rwpath(1:100:end, 2)], [rwpath(1:100:end, 1)], [rwpath(1:100:end, 3)]);
+    h = plot3([rwpath(1:1:end, 2)], [rwpath(1:1:end, 1)], [rwpath(1:1:end, 3)]);
     tim = toc;
     fprintf("%12.0f\t%f\n", size(unique(rwpath, "rows"), 1), tim);
 end
-
+axis equal;
 toc;

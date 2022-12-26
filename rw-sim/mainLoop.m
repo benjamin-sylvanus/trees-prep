@@ -36,13 +36,11 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
 
         if sum(pos, "all") > 0
             is = isosurface(y0, x0, z0, pos, 0);
-
             sum(pos, "all");
-            %             is.vertices = is.vertices + [Sy Sx Sz];
             p = patch('Faces', is.faces, 'Vertices', is.vertices);
-            p.FaceColor = 'green';
+            p.FaceColor = "green";
             p.FaceAlpha = 0.05;
-            p.EdgeColor = 'none';
+            p.EdgeColor = "none";
         end
 
         A(Sx:Nx, Sy:Ny, Sz:Nz) = pos_fill | pos;
