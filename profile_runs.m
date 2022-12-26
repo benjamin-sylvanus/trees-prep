@@ -38,23 +38,22 @@ A = A(~cellfun('isempty', A));
 sizes = cellfun('size', A, 1);
 
 % get pairs from A
-B = cell(size(A,1),2);
+B = cell(size(A, 1), 2);
+
+% extract node id [child, parent] -> linear index in B
+% B(i) = {[children],[parents]}
 for i = 1:length(B)
     pairlist = A{i};
     ps = pairs(pairlist, :);
-    
+
     % pairlist => [child, parent]
     children = ps(:, 1);
     parents = ps(:, 2);
-    
-    B{i,1}=children;
-    B{i,2}=parents;
+
+    B{i, 1} = children;
+    B{i, 2} = parents;
 end
 
-%{
-change swc to matrix
-
-%}
 %%
 % TODO only reasonable improvement would be vectorized rw to avoid for loop
 % TODO and to convert sub2ind calculations to custom function
@@ -72,21 +71,13 @@ iter = 10000;
 
 for i = 1:10
     tic;
-    sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter,true);
+    sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter, true);
     sim = sim.eventloop(iter);
     rwpath = sim.rwpath;
     rwpath = unique(rwpath, "rows", "stable");
-
-%     h = plot3(rwpath(:, 2), rwpath(:, 1), rwpath(:, 3));
     h = plot3([rwpath(1:100:end, 2)], [rwpath(1:100:end, 1)], [rwpath(1:100:end, 3)]);
-
     tim = toc;
     fprintf("%12.0f\t%f\n", size(unique(rwpath, "rows"), 1), tim);
-    %     pause(0.1);
 end
 
 toc;
-
-
-
-

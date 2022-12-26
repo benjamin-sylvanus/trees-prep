@@ -12,7 +12,7 @@ classdef randomwalker
 
     methods
 
-        function obj = randomwalker(flag, step, bounds, swc, LUT, A, pairs,iter)
+        function obj = randomwalker(flag, step, bounds, swc, LUT, A, pairs, iter)
             %RANDOMWALKER Construct an instance of this class
             %   Detailed explanation goes here
 
@@ -21,7 +21,7 @@ classdef randomwalker
             obj.step = step;
             obj.iter = iter;
             obj = obj.init_rands();
-            
+
         end
 
         function obj = initPosition(obj, flag, sx, sy, sz, swc, LUT, A, pairs)
@@ -37,13 +37,13 @@ classdef randomwalker
 
                     x0 = pos(1); y0 = pos(2); z0 = pos(3);
 
-%                     bx = ~ismember(x0,42:55); 
-%                     by = ~ismember(y0,42:55); 
-%                     bz = ~ismember(z0,10:35);
-%                     bcombined = bx |  by | bz;
-% 
-%                     if inside(1) && bcombined
-                      if inside(1)
+                    %                     bx = ~ismember(x0,42:55);
+                    %                     by = ~ismember(y0,42:55);
+                    %                     bz = ~ismember(z0,10:35);
+                    %                     bcombined = bx |  by | bz;
+                    %
+                    %                     if inside(1) && bcombined
+                    if inside(1)
                         outside = false;
                     end
 
@@ -56,16 +56,14 @@ classdef randomwalker
 
         end
 
-
         function obj = init_rands(obj)
             obj.rxyz = random_unit_vector(3, obj.iter);
 
         end
 
-
-        function obj = setnext(obj,i)
-%             vect = random_unit_vector(3, 1);
-            vect = obj.rxyz(:,i);
+        function obj = setnext(obj, i)
+            %             vect = random_unit_vector(3, 1);
+            vect = obj.rxyz(:, i);
             delta = vect * obj.step;
             pos2 = obj.curr + delta;
             obj.next = pos2;
@@ -97,7 +95,7 @@ classdef randomwalker
                     p2 = swc(targetid, 2:5);
                     x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
                     x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-                    inside = pointbasedswc2v([x0 x0], [y0 y0], [z0 z0], x1, x2, y1, y2, z1, z2, r1, r2,zeros(2,1,"logical")) | inside;
+                    inside = pointbasedswc2v([x0 x0], [y0 y0], [z0 z0], x1, x2, y1, y2, z1, z2, r1, r2, zeros(2, 1, "logical")) | inside;
 
                 end
 

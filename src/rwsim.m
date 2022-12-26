@@ -1,21 +1,4 @@
 %%
-%{
-- rw
-choose rand direction:
-        h cos theta , phi -> 0 : 2pi
-step - up to you.
-init position inside cell;
-did rw step in-out of cell.
-start from restricted diff.
-
-stay still when exiting.
-
-plot position and dif trajectory.
-
-100,1000 steps;
-
-as long as step is smaller than voxel size
-%}
 zz_test_tmp;
 
 % addpath(genpath('/Users/benjaminsylvanus/Desktop/random_unit_vector'));
@@ -31,27 +14,16 @@ tree = table(NodeID, Coords(:, 1), Coords(:, 2), Coords(:, 3), ...
     Radii, Parents, 'VariableNames', ...
     {'NodeId', 'X', 'Y', 'Z', 'Radii', 'Parent'});
 
-
-
-g = graph(NodeID(2:end),Parents(2:end),1,string(1:length(Parents)));
+g = graph(NodeID(2:end), Parents(2:end), 1, string(1:length(Parents)));
 
 %%
-sg = shortestpathtree(g,[243, 252, 257, 260, 267],267);
+sg = shortestpathtree(g, [243, 252, 257, 260, 267], 267);
 swc(unique(str2double(sg.Edges.EndNodes)));
 save("tree.mat", "tree");
 unique(str2double(sg.Edges.EndNodes));
-sg1 = subgraph(g,unique(str2double(sg.Edges.EndNodes)));
+sg1 = subgraph(g, unique(str2double(sg.Edges.EndNodes)));
 newnames = string(1:height(sg1.Nodes))';
 sg1.Nodes.Name = newnames;
-
-
-
-
-
-
-
-
-
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -80,8 +52,6 @@ toc;
 A = A(~cellfun('isempty', A));
 sizes = cellfun('size', A, 1);
 
-
-
 %%
 
 %%%%%% IF THE RW CROSSES OUTSIDE BOUNDS OF
@@ -91,8 +61,6 @@ sizes = cellfun('size', A, 1);
 % least semantic correlation to user query.
 % use cos similarity
 
-
-
 close all;
 figure();
 hold on;
@@ -100,6 +68,7 @@ hold on;
 axis equal
 %%
 tic;
+
 for i = 1:2
     tic;
     sim = random_walker_sim(LUT, A, pairs, boundSize, swc, 1, 0);
@@ -110,6 +79,7 @@ for i = 1:2
     h.Color = 'k';
     toc;
 end
+
 toc;
 
 axis equal;

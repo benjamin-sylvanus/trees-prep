@@ -1,4 +1,3 @@
-% addpath("/Users/benjaminsylvanus/Documents/CoopMRI/treestoolbox-master/");
 clearvars;
 addpath(genpath('/Users/bensylvanus/Desktop/code/work/'));
 d = '/Users/bensylvanus/Desktop/code/work/SWC';
