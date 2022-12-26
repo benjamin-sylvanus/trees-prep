@@ -27,7 +27,7 @@ end
 toc;
 
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.45);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 1);
 
 toc;
 tic;
@@ -68,10 +68,9 @@ hold on;
 tic;
 clc;
 iter = 10000;
-
 for i = 1:10
     tic;
-    sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter, true);
+    sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 0.5, 0, iter, true);
     sim = sim.eventloop(iter);
     rwpath = sim.rwpath;
     rwpath = unique(rwpath, "rows", "stable");

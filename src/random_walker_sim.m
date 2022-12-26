@@ -23,10 +23,10 @@ classdef random_walker_sim
 
         function obj = random_walker_sim(LUT, index_array, pairs, ...
                 bounds, swc, step_size, perm_prob, iter, init_in)
-            %RANDOM_WALKER_SIM Construct an instance of this class
-            %   Detailed explanation goes here
+            %RANDOM_WALKER_SIM Constructor
+            %   Initialize object for Monte Carlo Simulations
 
-            % initialize vars
+            % init vars
             obj.lookup_table = LUT;
             obj.index_array = index_array;
             obj.pairs = pairs;
@@ -84,73 +84,52 @@ classdef random_walker_sim
         end
 
         function [obj, inside] = checkpos(obj, curr, next, swc, LUT, A, pairs, i)
-
+            % extract {child,parent} Ids of segments near location of randomwalker
             indicies = obj.preprocesses(curr, next);
 
+            % if there are elements of the cell near the random walker
             if (indicies ~= 0)
 
+                % check if the random walker is inside these connections
                 [obj, currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
 
+                % determine whether boundary was crossed
+                % using states of current position and next
                 inside = obj.insideLogic(currinside, nextinside);
             else
+                % if no elements are near the randomwalker then no boundaries were crossed
                 inside = 0;
-            end
-
-        end
-
-        function inds = combineinds(~, cind, nind)
-
-            cidx = cind > 0;
-            nidx = nind > 0;
-
-            tc = cind(cidx);
-            tn = nind(nidx);
-
-            c = ~isempty(tc);
-            n = ~isempty(tn);
-
-            if c && n
-                inds = [tc; tn];
-            elseif c && ~n
-                inds = tc;
-            elseif ~c && n
-                inds = tn;
-            else
-                inds = 0;
             end
 
         end
 
         function inds = combineind(~, nind)
 
-            nidx = nind > 0;
+            % extract non-zero elements
+            nidx = nind > 0; tn = nind(nidx);
 
-            tn = nind(nidx);
-
+            % logicals for non empty index arrays
             n = ~isempty(tn);
 
             if n
+                % if there are non-zero elements return them
                 inds = tn;
             else
+                % return 0
                 inds = 0;
             end
 
         end
 
         function [obj, currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next)
-            %             x0 = curr(1); y0 = curr(2); z0 = curr(3);
+            % initialize current and next states
+            currinside = obj.currstate; nextinside = false;
+
+            % extract child and parent ids
+            children = A{indicies, 1}; parents = A{indicies, 2};
+
+            % set xyz for inside-outside calculation
             nx0 = next(1); ny0 = next(2); nz0 = next(3);
-
-            if islogical(obj.currstate)
-                currinside = obj.currstate;
-            else
-                currinside = false;
-            end
-
-            nextinside = false;
-
-            children = A{indicies, 1};
-            parents = A{indicies, 2};
             % for each pair: check if point is inside
             for i = 1:length(children)
                 % get base and target ids
@@ -165,11 +144,9 @@ classdef random_walker_sim
                 tcn = pointbasedswc2v(nx0, ny0, nz0, x1, x2, y1, y2, z1, z2, r1, r2, obj.logical_alloc);
 
                 % inside ith connection or already inside
-                % currinside = tcn(1) | currinside;
                 nextinside = tcn | nextinside;
 
-                % if both positions are inside:
-                % break loop to stop extra iterations
+                % if both positions are inside: break
                 if currinside && nextinside
                     break;
                 end
@@ -178,63 +155,24 @@ classdef random_walker_sim
 
         end
 
-        function inside = checkone_connection(obj, indicies, A, swc, pos)
-            x0 = pos(1); y0 = pos(2); z0 = pos(3);
-            inside = false;
-
-            children = A{indicies, 1};
-            parents = A{indicies, 2};
-
-            % for each pair: check if point is inside
-            for i = 1:length(children)
-                % get base and target ids
-                baseid = children(i); targetid = parents(i);
-                p1 = swc(baseid, 2:5);
-                p2 = swc(targetid, 2:5);
-                x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
-                x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-                inside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, obj.logical_alloc) | inside;
-            end
-
-        end
-
-        function logit(obj, connections, A)
-            % get pairs from A
-            pairlist = A{connections};
-            ps = obj.pairs(pairlist, :);
-
-            % pairlist => [child, parent]
-            children = ps(:, 1); parents = ps(:, 2);
-            allnodes = unique([children; parents]);
-
-            fid = fopen(fullfile('YourLogFile.txt'), 'a');
-
-            if fid == -1
-                error('Cannot open log file.');
-            end
-
-            for i = 1:length(allnodes)
-                fprintf(fid, "%d\n", allnodes(i));
-            end
-
-            fclose(fid);
-        end
-
-        function linearArray = rowOp(obj, row)
-
-        end
-
         function indicies = preprocesses(obj, curr, next)
-            LUT = obj.lookup_table;
             % convert float to voxel
-            nvoxes = float2vox(next);
-            nvoxes = nvoxes';
+            nvoxes = float2vox(next)';
+
+            % logical array for elements within range 0 < n < boundSize
             nv = all(nvoxes > 0, 2) & all(nvoxes < obj.boundSize, 2);
+
+            % extract elements within range
             NVOXES = nvoxes(nv, :)';
-            %NVOXES are always valid indicies
-            NVOXES = sub2ind(obj.boundSize, NVOXES(1, :), ...
-            NVOXES(2, :), NVOXES(3, :));
-            nindicies = LUT(NVOXES);
+
+            % convert subscript index to linear index
+            % ^ (faster than using sub index to get values from lookup table)
+            NVOXES = sub2ind(obj.boundSize, NVOXES(1, :), NVOXES(2, :), NVOXES(3, :));
+
+            % extract [child,parent] node ids
+            nindicies = obj.lookup_table(NVOXES);
+
+            % return non-zero indicies or return 0
             indicies = obj.combineind(nindicies');
         end
 
@@ -258,7 +196,6 @@ classdef random_walker_sim
                 % both positions outside
             elseif ~currinside && ~nextinside
                 disp("RW Outside: ");
-                %                     scatter3(curr(2), curr(1), curr(3));
 
                 inside = 0;
             else
