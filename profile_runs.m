@@ -1,5 +1,6 @@
 clc; clearvars; close all;
 tic;
+
 addpath(genpath("../../treestoolbox"));
 addpath(genpath("./"));
 addpath(" / Users / bensylvanus / Library / Application Support / MathWorks / MATLAB Add - Ons / " + ...
@@ -68,27 +69,38 @@ hold on;
 tic;
 clc;
 iter = 10000;
-plts = zeros(30,iter,3);
+plts = zeros(30, iter, 3);
 tic;
+
+%%
+%{
+    % TODO implement time step determine how to walkers concurrently
+X.time_step = 2e-4; % Time of each step (ms)
+X.step_num = 5e5; % # step
+X.particle_num = 1e3; % # particle
+%}
+%%
+
 for i = 1:200
     tic;
     sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 0.5, 0, iter, true);
     sim = sim.eventloop(iter);
     rwpath = sim.rwpath;
-%     rwpath = unique(rwpath, "rows", "stable");
+    %     rwpath = unique(rwpath, "rows", "stable");
 
-    plts(i,:,:)=rwpath;
-%     h = plot3([rwpath(1:1000:end, 2)], [rwpath(1:1000:end, 1)], [rwpath(1:1000:end, 3)]);
+    plts(i, :, :) = rwpath;
+    %     h = plot3([rwpath(1:1000:end, 2)], [rwpath(1:1000:end, 1)], [rwpath(1:1000:end, 3)]);
     toc;
-    tim=toc;
+    tim = toc;
     fprintf("%12.0f\t%f\n", size(unique(rwpath, "rows"), 1), tim);
 end
 
 % axis equal;
 toc;
+
 for i = 1:200
-    rwpath = plts(i,:,:);
-    rwpath = reshape(rwpath,size(rwpath,[2 3]));
+    rwpath = plts(i, :, :);
+    rwpath = reshape(rwpath, size(rwpath, [2 3]));
     rwpath = unique(rwpath, "rows", "stable");
     h = plot3([rwpath(1:10:end, 2)], [rwpath(1:10:end, 1)], [rwpath(1:10:end, 3)]);
 end
