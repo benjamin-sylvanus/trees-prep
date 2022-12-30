@@ -1,4 +1,4 @@
-function swc = read_t(filename)
+function tree = read_t(filename)
     fid = fopen(filename);
     A = textscan (fid, '%s', 'delimiter', '\n');
     A = A{1};
@@ -18,4 +18,12 @@ function swc = read_t(filename)
 
     end
 
+    NodeID = swc(:, 1); Coords = swc(:, 3:5);
+    Radii = swc(:, 6); Parents = swc(:, 7);
+
+    tree = table(NodeID, Coords(:, 1), Coords(:, 2), Coords(:, 3), ...
+        Radii, Parents, 'VariableNames', ...
+        {'NodeId', 'X', 'Y', 'Z', 'Radii', 'Parent'});
+
+    save("tree.mat", "tree");
 end

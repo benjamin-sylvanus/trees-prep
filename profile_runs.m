@@ -3,22 +3,15 @@ tic;
 
 addpath(genpath("../../treestoolbox"));
 addpath(genpath("./"));
-addpath(" / Users / bensylvanus / Library / Application Support / MathWorks / MATLAB Add - Ons / " + ...
+addpath("/Users/bensylvanus/Library/Application Support/MathWorks/MATLAB Add-Ons/" + ...
 "Collections/random unit vector generator");
 
-swc = read_t('exampleTree.swc');
-NodeID = swc(:, 1); Coords = swc(:, 3:5);
-Radii = swc(:, 6); Parents = swc(:, 7);
+tree = read_t('exampleTree.swc');
 
-tree = table(NodeID, Coords(:, 1), Coords(:, 2), Coords(:, 3), ...
-    Radii, Parents, 'VariableNames', ...
-    {'NodeId', 'X', 'Y', 'Z', 'Radii', 'Parent'});
-
-save("tree.mat", "tree");
-
-clearvars; clc;
+% clc;
 tic;
-load("tree.mat", "tree");
+% clearvars;
+% load("tree.mat", "tree");
 dists = zeros(height(tree), 1);
 
 for i = 2:height(tree)
@@ -68,18 +61,16 @@ hold on;
 
 tic;
 clc;
-iter = 10000;
+iter = 1000;
 plts = zeros(30, iter, 3);
 tic;
 
-%%
 %{
-    % TODO implement time step determine how to walkers concurrently
+% TODO implement time step determine how to walk concurrently
 X.time_step = 2e-4; % Time of each step (ms)
 X.step_num = 5e5; % # step
 X.particle_num = 1e3; % # particle
 %}
-%%
 
 for i = 1:200
     tic;
