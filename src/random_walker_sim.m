@@ -55,11 +55,11 @@ classdef random_walker_sim
 
             while i <= iter
 
-                if mod(i, 100) == 0
-                    toc;
-                    fprintf("I: %d\n", i);
-                    tic;
-                end
+                %                 if mod(i, 100) == 0
+                %                     toc;
+                %                     fprintf("I: %d\n", i);
+                %                     tic;
+                %                 end
 
                 lim = obj;
 
@@ -140,7 +140,7 @@ classdef random_walker_sim
 
         end
 
-        function [obj, currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next, j)
+        function [obj, currinside, nextinside] = check_connections(obj, ~, indicies, A, swc, ~, next, j)
             % initialize current and next states
             currinside = obj.currstate(j); nextinside = false;
 
@@ -237,6 +237,121 @@ classdef random_walker_sim
             end
 
             fprintf("Particle Init: %f seconds\n", toc);
+        end
+
+        function [particle, currstate] = cellgap(obj, particle, currstate, i)
+
+            particle = particle.setnext(i);
+
+            % get positions
+            current = particle.curr;
+            next = particle.next;
+
+            % check positions
+            [~, inside] = obj.checkpos2(current, next, obj.swc, obj.lookup_table, obj.index_array, obj.pairs, i, currstate);
+
+            if inside
+                particle.curr = next;
+                currstate = true;
+            else
+                % random walker was outside or crossed boundary
+                if (rand < obj.perm_prob)
+                    particle.curr = next;
+                    currstate = false;
+                end
+
+                % TODO implement this outcome:
+                % ^ LIMIT STEP WHEN:
+                % * crosses out
+                % ^ ENABLE STEP WHEN:
+                % * crosses in
+                % * remains out
+            end
+
+        end
+
+        function obj = eventloop2(obj, iter)
+            i = 1;
+            obj.currstate = zeros(obj.particle_num, 1, "logical");
+            obj.currstate(:) = true;
+            obj.rwpath = zeros(iter, obj.particle_num, 3);
+            obj.randomwalker.step = obj.step_size;
+
+            while i <= iter
+
+                %                 if mod(i, 100) == 0
+                %                     toc;
+                %                     fprintf("I: %d\n", i);
+                %                     tic;
+                %                 end
+
+                eles = num2cell(repelem(i, obj.particle_num, 1));
+                [res, states] = cellfun(@obj.cellgap, obj.particles, num2cell(obj.currstate), eles, "UniformOutput", false);
+                obj.particles = res;
+                obj.currstate = cell2mat(states);
+
+                for j = 1:obj.particle_num
+                    obj.rwpath(i, j, :) = obj.particles{j}.curr(:)';
+                end
+
+                i = i + 1;
+            end
+
+        end
+
+        function [obj, inside] = checkpos2(obj, curr, next, swc, LUT, A, pairs, i, currstate)
+            % extract {child,parent} Ids of segments near location of randomwalker
+            indicies = obj.preprocesses(curr, next);
+
+            % if there are elements of the cell near the random walker
+            if (indicies ~= 0)
+
+                % check if the random walker is inside these connections
+                [obj, currinside, nextinside] = check_connections2(obj, 0, indicies, A, swc, curr, next, currstate);
+
+                % determine whether boundary was crossed
+                % using states of current position and next
+                inside = obj.insideLogic(currinside, nextinside);
+            else
+                % if no elements are near the randomwalker then no boundaries were crossed
+                inside = 0;
+            end
+
+        end
+
+        function [obj, currinside, nextinside] = check_connections2(obj, ~, indicies, A, swc, ~, next, currstate)
+            % initialize current and next states
+            currinside = currstate; nextinside = false;
+
+            % extract child and parent ids
+            children = A{indicies, 1}; parents = A{indicies, 2};
+
+            % set xyz for inside-outside calculation
+            nx0 = next(1); ny0 = next(2); nz0 = next(3);
+
+            % for each pair: check if point is inside
+            for i = 1:length(children)
+                % get base and target ids
+                % TODO extract values to store in A rather than at runtime
+                baseid = children(i); targetid = parents(i);
+                p1 = swc(baseid, 2:5);
+                p2 = swc(targetid, 2:5);
+
+                x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
+                x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
+
+                tcn = pointbasedswc2v(nx0, ny0, nz0, x1, x2, y1, y2, z1, z2, r1, r2, obj.logical_alloc);
+
+                % inside ith connection or already inside
+                nextinside = tcn | nextinside;
+
+                % if both positions are inside: break
+                if currinside && nextinside
+                    break;
+                end
+
+            end
+
         end
 
     end

@@ -61,7 +61,7 @@ hold on;
 
 tic;
 clc;
-iter = 1e3;
+iter = 1e4;
 tic;
 
 %{
@@ -70,12 +70,19 @@ X.time_step = 2e-4; % Time of each step (ms)
 X.step_num = 5e5; % # step
 X.particle_num = 1e3; % # particle
 %}
-
-particle_num = 1e3;
+%%
+particle_num = 5e2;
 tic;
 clc;
 sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter, true, particle_num);
-sim = sim.eventloop(iter);
+
+tic;
+sim = sim.eventloop2(iter);
+toc;
+
+% tic;
+% sim = sim.eventloop(iter);
+% toc;
 
 rwpath = sim.rwpath;
 hold on;

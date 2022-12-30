@@ -38,7 +38,7 @@ classdef randomwalker
                         % check that position is inside the cell
                         inside = checkpos(obj, ps, swc, LUT, A, pairs);
 
-                        x0 = ps(1); y0 = ps(2); z0 = ps(3);
+                        % x0 = ps(1); y0 = ps(2); z0 = ps(3);
 
                         %                     bx = ~ismember(x0,42:55);
                         %                     by = ~ismember(y0,42:55);
@@ -69,7 +69,6 @@ classdef randomwalker
         end
 
         function obj = setnext(obj, i)
-            %             vect = random_unit_vector(3, 1);
             vect = obj.rxyz(:, i);
             delta = vect * obj.step;
             pos2 = obj.curr + delta;
