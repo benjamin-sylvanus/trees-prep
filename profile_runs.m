@@ -21,7 +21,7 @@ end
 toc;
 
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.8);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.6);
 
 toc;
 tic;
@@ -61,8 +61,7 @@ hold on;
 
 tic;
 clc;
-iter = 1000;
-plts = zeros(30, iter, 3);
+iter = 1e3;
 tic;
 
 %{
@@ -72,26 +71,20 @@ X.step_num = 5e5; % # step
 X.particle_num = 1e3; % # particle
 %}
 
-for i = 1:200
-    tic;
-    sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 0.5, 0, iter, true);
-    sim = sim.eventloop(iter);
-    rwpath = sim.rwpath;
-    %     rwpath = unique(rwpath, "rows", "stable");
+particle_num = 1e3;
+tic;
+clc;
+sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter, true,particle_num);
+sim = sim.eventloop(iter);
 
-    plts(i, :, :) = rwpath;
-    %     h = plot3([rwpath(1:1000:end, 2)], [rwpath(1:1000:end, 1)], [rwpath(1:1000:end, 3)]);
-    toc;
-    tim = toc;
-    fprintf("%12.0f\t%f\n", size(unique(rwpath, "rows"), 1), tim);
+rwpath = sim.rwpath;
+hold on;
+for i = 1:sim.particle_num
+     h = plot3([rwpath(:,i, 2)], [rwpath(:,i, 1)], [rwpath(:,i,3)]);
 end
 
-% axis equal;
-toc;
 
-for i = 1:200
-    rwpath = plts(i, :, :);
-    rwpath = reshape(rwpath, size(rwpath, [2 3]));
-    rwpath = unique(rwpath, "rows", "stable");
-    h = plot3([rwpath(1:10:end, 2)], [rwpath(1:10:end, 1)], [rwpath(1:10:end, 3)]);
-end
+
+
+
+

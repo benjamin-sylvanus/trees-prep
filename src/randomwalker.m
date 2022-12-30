@@ -32,26 +32,33 @@ classdef randomwalker
                 while outside
                     % get a random position
                     pos = obj.randxyz(sx, sy, sz);
-                    % check that position is inside the cell
-                    inside = checkpos(obj, pos, swc, LUT, A, pairs);
 
-                    x0 = pos(1); y0 = pos(2); z0 = pos(3);
+                    for i = 1:size(pos, 1)
+                        ps = pos(i, :)';
+                        % check that position is inside the cell
+                        inside = checkpos(obj, ps, swc, LUT, A, pairs);
 
-                    %                     bx = ~ismember(x0,42:55);
-                    %                     by = ~ismember(y0,42:55);
-                    %                     bz = ~ismember(z0,10:35);
-                    %                     bcombined = bx |  by | bz;
-                    %
-                    %                     if inside(1) && bcombined
-                    if inside(1)
-                        outside = false;
+                        x0 = ps(1); y0 = ps(2); z0 = ps(3);
+
+                        %                     bx = ~ismember(x0,42:55);
+                        %                     by = ~ismember(y0,42:55);
+                        %                     bz = ~ismember(z0,10:35);
+                        %                     bcombined = bx |  by | bz;
+                        %
+                        %                     if inside(1) && bcombined
+                        if inside(1)
+                            pos = ps;
+                            outside = false;
+                            break;
+                        end
+
                     end
 
                 end
 
                 obj.curr = pos;
             else
-                obj.curr = randxyx(sx, sy, sz);
+                obj.curr = randxyz(sx, sy, sz);
             end
 
         end
@@ -104,8 +111,8 @@ classdef randomwalker
         end
 
         function pos = randxyz(obj, sx, sy, sz)
-            x = randi(sx, 1); y = randi(sy, 1); z = randi(sz, 1);
-            pos = [x; y; z];
+            x = randi([round(sx/4), round(3*sx/4)], 1000, 1); y = randi([round(sy/4), round(3*sy/4)], 1000, 1); z = randi([round(sz/4), round(3*sz/4)], 1000, 1);
+            pos = [x, y, z];
         end
 
     end

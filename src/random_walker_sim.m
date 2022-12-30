@@ -16,13 +16,15 @@ classdef random_walker_sim
         logical_alloc;
         voxels;
         currstate;
+        particles;
+        particle_num;
 
     end
 
     methods (Access = public)
 
         function obj = random_walker_sim(LUT, index_array, pairs, ...
-                bounds, swc, step_size, perm_prob, iter, init_in)
+                bounds, swc, step_size, perm_prob, iter, init_in, particle_num)
             %RANDOM_WALKER_SIM Constructor
             %   Initialize object for Monte Carlo Simulations
 
@@ -37,53 +39,69 @@ classdef random_walker_sim
             obj.logical_alloc = zeros(1, 1, "logical");
             obj.voxels = cell(iter, 2);
             obj.currstate = init_in;
+            obj.particle_num = particle_num;
+            obj.particles = obj.init_particles(iter);
+
             obj.randomwalker = randomwalker(init_in, obj.step_size, bounds, ...
                 obj.swc, obj.lookup_table, obj.index_array, obj.pairs, iter);
         end
 
         function obj = eventloop(obj, iter)
             i = 1;
-            obj.rwpath = zeros(iter, 3);
+            obj.currstate = zeros(obj.particle_num,1,"logical");
+            obj.currstate(:) = true;
+            obj.rwpath = zeros(iter,obj.particle_num, 3);
             obj.randomwalker.step = obj.step_size;
-
+            
             while i <= iter
-
-                obj.randomwalker = obj.randomwalker.setnext(i);
-
-                % get positions
-                current = obj.randomwalker.curr;
-                next = obj.randomwalker.next;
-
-                % check positions
-                [obj, inside] = obj.checkpos(current, next, obj.swc, ...
-                obj.lookup_table, obj.index_array, obj.pairs, i);
-
-                % inside -> update vars
-                if inside
-                    obj.randomwalker.curr = next;
-                    obj.currstate = true;
-                else
-                    % random walker was outside or crossed boundary
-                    if (rand < obj.perm_prob)
-                        obj.randomwalker.curr = next;
-                        obj.currstate = false;
-                    end
-
-                    % TODO implement this outcome:
-                    % ^ LIMIT STEP WHEN:
-                    % * crosses out
-                    % ^ ENABLE STEP WHEN:
-                    % * crosses in
-                    % * remains out
+                if mod(i,100) == 0
+                    toc;
+                    fprintf("I: %d\n",i);
+                    tic;
                 end
 
-                obj.rwpath(i, :) = obj.randomwalker.curr(:)';
+                lim = obj;
+
+
+                for j = 1:lim.particle_num
+
+                    obj.particles{j} = obj.particles{j}.setnext(i);
+
+
+                    % get positions
+                    current = obj.particles{j}.curr;
+                    next = obj.particles{j}.next;
+
+                    % check positions
+                    [obj, inside] = obj.checkpos(current, next, obj.swc, ...
+                    obj.lookup_table, obj.index_array, obj.pairs, i, j);
+
+                    % inside -> update vars
+                    if inside
+                        obj.particles{j}.curr = next;
+                        obj.currstate(j) = true;
+                    else
+                        % random walker was outside or crossed boundary
+                        if (rand < obj.perm_prob)
+                            obj.particles(j).curr = next;
+                            obj.currstate(j) = false;
+                        end
+
+                        % TODO implement this outcome:
+                        % ^ LIMIT STEP WHEN:
+                        % * crosses out
+                        % ^ ENABLE STEP WHEN:
+                        % * crosses in
+                        % * remains out
+                    end
+                    obj.rwpath(i,j, :) = obj.particles{j}.curr(:)';
+                end
                 i = i + 1;
             end
 
         end
 
-        function [obj, inside] = checkpos(obj, curr, next, swc, LUT, A, pairs, i)
+        function [obj, inside] = checkpos(obj, curr, next, swc, LUT, A, pairs, i, j)
             % extract {child,parent} Ids of segments near location of randomwalker
             indicies = obj.preprocesses(curr, next);
 
@@ -91,7 +109,7 @@ classdef random_walker_sim
             if (indicies ~= 0)
 
                 % check if the random walker is inside these connections
-                [obj, currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next);
+                [obj, currinside, nextinside] = check_connections(obj, 0, indicies, A, swc, curr, next, j);
 
                 % determine whether boundary was crossed
                 % using states of current position and next
@@ -121,15 +139,16 @@ classdef random_walker_sim
 
         end
 
-        function [obj, currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next)
+        function [obj, currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next,j)
             % initialize current and next states
-            currinside = obj.currstate; nextinside = false;
+            currinside = obj.currstate(j); nextinside = false;
 
             % extract child and parent ids
             children = A{indicies, 1}; parents = A{indicies, 2};
 
             % set xyz for inside-outside calculation
             nx0 = next(1); ny0 = next(2); nz0 = next(3);
+            
             % for each pair: check if point is inside
             for i = 1:length(children)
                 % get base and target ids
@@ -155,7 +174,7 @@ classdef random_walker_sim
 
         end
 
-        function indicies = preprocesses(obj, curr, next)
+        function indicies = preprocesses(obj, ~, next)
             % convert float to voxel
             nvoxes = float2vox(next)';
 
@@ -203,6 +222,18 @@ classdef random_walker_sim
                 inside = 0;
             end
 
+        end
+
+        function particles = init_particles(obj,iter)
+            % create n-randomwalkers
+            particles = cell(obj.particle_num, 1);
+            tic;
+            for i = 1:obj.particle_num
+                % initialize randomwalker  
+                particles{i} = randomwalker(true, obj.step_size, obj.boundSize, ...
+                    obj.swc, obj.lookup_table, obj.index_array, obj.pairs, iter);
+            end
+            fprintf("Particle Init: %f seconds\n",toc);
         end
 
     end
