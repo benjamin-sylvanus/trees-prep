@@ -74,17 +74,12 @@ X.particle_num = 1e3; % # particle
 particle_num = 1e3;
 tic;
 clc;
-sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter, true,particle_num);
+sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter, true, particle_num);
 sim = sim.eventloop(iter);
 
 rwpath = sim.rwpath;
 hold on;
+
 for i = 1:sim.particle_num
-     h = plot3([rwpath(:,i, 2)], [rwpath(:,i, 1)], [rwpath(:,i,3)]);
+    h = plot3([rwpath(:, i, 2)], [rwpath(:, i, 1)], [rwpath(:, i, 3)]);
 end
-
-
-
-
-
-

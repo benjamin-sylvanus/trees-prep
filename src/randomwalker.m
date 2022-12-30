@@ -111,7 +111,7 @@ classdef randomwalker
         end
 
         function pos = randxyz(obj, sx, sy, sz)
-            x = randi([round(sx/4), round(3*sx/4)], 1000, 1); y = randi([round(sy/4), round(3*sy/4)], 1000, 1); z = randi([round(sz/4), round(3*sz/4)], 1000, 1);
+            x = randi([round(sx / 4), round(3 * sx / 4)], 1000, 1); y = randi([round(sy / 4), round(3 * sy / 4)], 1000, 1); z = randi([round(sz / 4), round(3 * sz / 4)], 1000, 1);
             pos = [x, y, z];
         end
 

@@ -48,25 +48,24 @@ classdef random_walker_sim
 
         function obj = eventloop(obj, iter)
             i = 1;
-            obj.currstate = zeros(obj.particle_num,1,"logical");
+            obj.currstate = zeros(obj.particle_num, 1, "logical");
             obj.currstate(:) = true;
-            obj.rwpath = zeros(iter,obj.particle_num, 3);
+            obj.rwpath = zeros(iter, obj.particle_num, 3);
             obj.randomwalker.step = obj.step_size;
-            
+
             while i <= iter
-                if mod(i,100) == 0
+
+                if mod(i, 100) == 0
                     toc;
-                    fprintf("I: %d\n",i);
+                    fprintf("I: %d\n", i);
                     tic;
                 end
 
                 lim = obj;
 
-
                 for j = 1:lim.particle_num
 
                     obj.particles{j} = obj.particles{j}.setnext(i);
-
 
                     % get positions
                     current = obj.particles{j}.curr;
@@ -94,8 +93,10 @@ classdef random_walker_sim
                         % * crosses in
                         % * remains out
                     end
-                    obj.rwpath(i,j, :) = obj.particles{j}.curr(:)';
+
+                    obj.rwpath(i, j, :) = obj.particles{j}.curr(:)';
                 end
+
                 i = i + 1;
             end
 
@@ -139,7 +140,7 @@ classdef random_walker_sim
 
         end
 
-        function [obj, currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next,j)
+        function [obj, currinside, nextinside] = check_connections(obj, flag, indicies, A, swc, curr, next, j)
             % initialize current and next states
             currinside = obj.currstate(j); nextinside = false;
 
@@ -148,7 +149,7 @@ classdef random_walker_sim
 
             % set xyz for inside-outside calculation
             nx0 = next(1); ny0 = next(2); nz0 = next(3);
-            
+
             % for each pair: check if point is inside
             for i = 1:length(children)
                 % get base and target ids
@@ -224,16 +225,18 @@ classdef random_walker_sim
 
         end
 
-        function particles = init_particles(obj,iter)
+        function particles = init_particles(obj, iter)
             % create n-randomwalkers
             particles = cell(obj.particle_num, 1);
             tic;
+
             for i = 1:obj.particle_num
-                % initialize randomwalker  
+                % initialize randomwalker
                 particles{i} = randomwalker(true, obj.step_size, obj.boundSize, ...
-                    obj.swc, obj.lookup_table, obj.index_array, obj.pairs, iter);
+                obj.swc, obj.lookup_table, obj.index_array, obj.pairs, iter);
             end
-            fprintf("Particle Init: %f seconds\n",toc);
+
+            fprintf("Particle Init: %f seconds\n", toc);
         end
 
     end
