@@ -1,8 +1,7 @@
-function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
-    A = A;
+function [A] = mainLoop(tree, A, pairBounds, pairs)
     swc = tree{:, :};
 
-    ecount = 0; prevElapse = 0; tic;
+    tic;
 
     for i = 1:size(pairs, 1)
 
@@ -27,12 +26,6 @@ function [A, poses] = mainLoop(tree, A, pairBounds, pairs)
         pos = swc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, Nx, Ny, Nz);
 
         pos_fill = A(Sx:Nx, Sy:Ny, Sz:Nz);
-
-        Q = find(pos == 1);
-        [ix, iy, iz] = ind2sub(size(pos), Q);
-        mxyz = mean([iy, ix, iz]);
-
-        poses(i, :) = mxyz + [Sy Sx Sz];
 
         if sum(pos, "all") > 0
             is = isosurface(y0, x0, z0, pos, 0);

@@ -12,7 +12,7 @@ load_tree(names{1});
 t = {};
 
 for i = 1:length(dswc)
-    t{i, 1} = load_tree(names{i}, ' ');
+    t{i, 1} = load_tree(names{i}, ' '); %#ok<SAGROW> 
 end
 
 cd ('/Users/bensylvanus/Desktop/code/work/trees-prep/')
@@ -28,7 +28,7 @@ close all;
 rt = resample_tree(t{33}, 2000, '-s');
 % rt.D(rt.D>4000) = 4000;
 figure
-hist(rt.D);
+hist(rt.D); 
 %%
 swc_tree(rt, 'exampleTree.swc');
 %%

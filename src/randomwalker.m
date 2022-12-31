@@ -10,7 +10,7 @@ classdef randomwalker
         rxyz;
     end
 
-    methods
+    methods (Access = public)
 
         function obj = randomwalker(flag, step, bounds, swc, LUT, A, pairs, iter)
             %RANDOMWALKER Construct an instance of this class
@@ -68,11 +68,10 @@ classdef randomwalker
 
         end
 
-        function obj = setnext(obj, i)
+        function next = setnext(obj, i)
             vect = obj.rxyz(:, i);
             delta = vect * obj.step;
-            pos2 = obj.curr + delta;
-            obj.next = pos2;
+            next = obj.curr + delta;
         end
 
         function inside = checkpos(~, pos, swc, LUT, A, pairs)
@@ -109,7 +108,11 @@ classdef randomwalker
 
         end
 
-        function pos = randxyz(obj, sx, sy, sz)
+    end
+
+    methods (Static)
+
+        function pos = randxyz(sx, sy, sz)
             x = randi([round(sx / 4), round(3 * sx / 4)], 1000, 1); y = randi([round(sy / 4), round(3 * sy / 4)], 1000, 1); z = randi([round(sz / 4), round(3 * sz / 4)], 1000, 1);
             pos = [x, y, z];
         end

@@ -21,7 +21,7 @@ end
 toc;
 
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.6);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.5);
 
 toc;
 tic;
@@ -54,16 +54,12 @@ end
 close all;
 figure();
 hold on;
-[~, ~] = mainLoop(swc, zeros(boundSize), b, pairs);
+[~] = mainLoop(swc, zeros(boundSize), b, pairs);
 axis equal;
 % view(3);
 hold on;
 
-tic;
 clc;
-iter = 1e4;
-tic;
-
 %{
 % TODO implement time step determine how to walk concurrently
 X.time_step = 2e-4; % Time of each step (ms)
@@ -71,18 +67,14 @@ X.step_num = 5e5; % # step
 X.particle_num = 1e3; % # particle
 %}
 %%
-particle_num = 5e2;
+step_num = 2e3;
+particle_num = 1e3;
 tic;
-clc;
-sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, iter, true, particle_num);
+sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, step_num, true, particle_num);
 
 tic;
-sim = sim.eventloop2(iter);
+sim = sim.eventloop2(step_num);
 toc;
-
-% tic;
-% sim = sim.eventloop(iter);
-% toc;
 
 rwpath = sim.rwpath;
 hold on;

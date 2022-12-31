@@ -1,6 +1,3 @@
-function temp = helper(temp, inds, i)
-
-    k = repelem(i, size(temp, 1));
+function temp = helper(temp, ~, i)
     temp(:, end + 1) = {i};
-    temp
 end

@@ -11,7 +11,7 @@ function tree = read_t(filename)
             % allow comments: lines starting with #:
             if ~strcmp (A{counter} (1), '#')
                 swc0 = sscanf (A{counter}, '%f')';
-                swc = [swc; swc0];
+                swc = [swc; swc0]; %#ok<AGROW>
             end
 
         end

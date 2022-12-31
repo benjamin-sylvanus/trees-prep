@@ -8,7 +8,6 @@ classdef random_walker_sim
         pairs;
         swc;
         step_size;
-        randomwalker;
         perm_prob;
         boundSize;
         rwpath;
@@ -41,9 +40,6 @@ classdef random_walker_sim
             obj.currstate = init_in;
             obj.particle_num = particle_num;
             obj.particles = obj.init_particles(iter);
-
-            obj.randomwalker = randomwalker(init_in, obj.step_size, bounds, ...
-                obj.swc, obj.lookup_table, obj.index_array, obj.pairs, iter);
         end
 
         function obj = eventloop(obj, iter)
@@ -52,14 +48,15 @@ classdef random_walker_sim
             obj.currstate(:) = true;
             obj.rwpath = zeros(iter, obj.particle_num, 3);
             obj.randomwalker.step = obj.step_size;
+            % fid = fopen("log.txt","a+");
+            fid = fopen("X.txt", "a+");
 
             while i <= iter
 
-                %                 if mod(i, 100) == 0
-                %                     toc;
-                %                     fprintf("I: %d\n", i);
-                %                     tic;
-                %                 end
+                if mod(i, 1000) == 0
+                    toc;
+                    tic;
+                end
 
                 lim = obj;
 
@@ -72,8 +69,7 @@ classdef random_walker_sim
                     next = obj.particles{j}.next;
 
                     % check positions
-                    [obj, inside] = obj.checkpos(current, next, obj.swc, ...
-                    obj.lookup_table, obj.index_array, obj.pairs, i, j);
+                    [obj, inside] = obj.checkpos(current, next, obj.swc, obj.index_array, j);
 
                     % inside -> update vars
                     if inside
@@ -100,9 +96,11 @@ classdef random_walker_sim
                 i = i + 1;
             end
 
+            fclose(fid);
+
         end
 
-        function [obj, inside] = checkpos(obj, curr, next, swc, LUT, A, pairs, i, j)
+        function [obj, inside] = checkpos(obj, curr, next, swc, A, j)
             % extract {child,parent} Ids of segments near location of randomwalker
             indicies = obj.preprocesses(curr, next);
 
@@ -114,7 +112,7 @@ classdef random_walker_sim
 
                 % determine whether boundary was crossed
                 % using states of current position and next
-                inside = obj.insideLogic(currinside, nextinside);
+                inside = insideLogic(currinside, nextinside);
             else
                 % if no elements are near the randomwalker then no boundaries were crossed
                 inside = 0;
@@ -196,35 +194,6 @@ classdef random_walker_sim
             indicies = obj.combineind(nindicies');
         end
 
-        function inside = insideLogic(obj, currinside, nextinside)
-            % both positions within a connection
-            if currinside && nextinside
-                inside = 1;
-                % disp("Was just inside")
-
-                % current pos in, next pos out
-            elseif currinside && ~nextinside
-                % disp("next_outside")
-                inside = 0;
-
-                % current pos out, next pos in
-            elseif ~currinside && nextinside
-
-                disp("RW Outside NextInside: ");
-                inside = 0;
-
-                % both positions outside
-            elseif ~currinside && ~nextinside
-                disp("RW Outside: ");
-
-                inside = 0;
-            else
-                disp("OUTSIDE: ")
-                inside = 0;
-            end
-
-        end
-
         function particles = init_particles(obj, iter)
             % create n-randomwalkers
             particles = cell(obj.particle_num, 1);
@@ -240,15 +209,12 @@ classdef random_walker_sim
         end
 
         function [particle, currstate] = cellgap(obj, particle, currstate, i)
-
-            particle = particle.setnext(i);
-
             % get positions
             current = particle.curr;
-            next = particle.next;
+            next = particle.setnext(i);
 
             % check positions
-            [~, inside] = obj.checkpos2(current, next, obj.swc, obj.lookup_table, obj.index_array, obj.pairs, i, currstate);
+            [~, inside] = obj.checkpos2(current, next, obj.swc, obj.index_array, currstate);
 
             if inside
                 particle.curr = next;
@@ -275,15 +241,16 @@ classdef random_walker_sim
             obj.currstate = zeros(obj.particle_num, 1, "logical");
             obj.currstate(:) = true;
             obj.rwpath = zeros(iter, obj.particle_num, 3);
-            obj.randomwalker.step = obj.step_size;
+            % fid = fopen("log.txt","a+");
+            %             fid = fopen("X.txt", "a+");
 
             while i <= iter
 
-                %                 if mod(i, 100) == 0
-                %                     toc;
-                %                     fprintf("I: %d\n", i);
-                %                     tic;
-                %                 end
+                if mod(i, 1000) == 0
+                    toc;
+                    % fprintf(fid, "I: %d\t%f\n", i, toc);
+                    tic;
+                end
 
                 eles = num2cell(repelem(i, obj.particle_num, 1));
                 [res, states] = cellfun(@obj.cellgap, obj.particles, num2cell(obj.currstate), eles, "UniformOutput", false);
@@ -292,14 +259,19 @@ classdef random_walker_sim
 
                 for j = 1:obj.particle_num
                     obj.rwpath(i, j, :) = obj.particles{j}.curr(:)';
+                    %                     fprintf(fid, "%d ", obj.particles{j}.curr(1));
                 end
+
+                %                 fprintf(fid,"\n");
 
                 i = i + 1;
             end
 
+            %             fclose(fid);
+
         end
 
-        function [obj, inside] = checkpos2(obj, curr, next, swc, LUT, A, pairs, i, currstate)
+        function [obj, inside] = checkpos2(obj, curr, next, swc, A, currstate)
             % extract {child,parent} Ids of segments near location of randomwalker
             indicies = obj.preprocesses(curr, next);
 
@@ -329,13 +301,18 @@ classdef random_walker_sim
             % set xyz for inside-outside calculation
             nx0 = next(1); ny0 = next(2); nz0 = next(3);
 
+            swc1 = swc(children, 2:5);
+            swc2 = swc(parents, 2:5);
+
             % for each pair: check if point is inside
             for i = 1:length(children)
                 % get base and target ids
                 % TODO extract values to store in A rather than at runtime
-                baseid = children(i); targetid = parents(i);
-                p1 = swc(baseid, 2:5);
-                p2 = swc(targetid, 2:5);
+                %                 baseid = children(i); targetid = parents(i);
+                %                 p1 = swc(baseid, 2:5);
+                %                 p2 = swc(targetid, 2:5);
+                p1 = swc1(i, :);
+                p2 = swc2(i, :);
 
                 x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
                 x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
@@ -350,6 +327,39 @@ classdef random_walker_sim
                     break;
                 end
 
+            end
+
+        end
+
+    end
+
+    methods (Static)
+
+        function inside = insideLogic(currinside, nextinside)
+            % both positions within a connection
+            if currinside && nextinside
+                inside = 1;
+                % disp("Was just inside")
+
+                % current pos in, next pos out
+            elseif currinside && ~nextinside
+                % disp("next_outside")
+                inside = 0;
+
+                % current pos out, next pos in
+            elseif ~currinside && nextinside
+
+                disp("RW Outside NextInside: ");
+                inside = 0;
+
+                % both positions outside
+            elseif ~currinside && ~nextinside
+                disp("RW Outside: ");
+
+                inside = 0;
+            else
+                disp("OUTSIDE: ")
+                inside = 0;
             end
 
         end

@@ -30,18 +30,16 @@ function [b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, voxelScale)
     swc.Radii = R;
     % min(swc.tree.Z-swc.tree.Radii)
 
-    [b, pairs] = calcBounds(swc{:, :}, VSIZE);
+    [b, pairs] = calcBounds(swc{:, :});
     addpath(genpath(['/Users/benjaminsylvanus/Documents/GitHub/' ...
                      'SparseMatrixGenerator/ndSparse_G4_2021_03_16']));
     b = b.a;
 
     % Input [r1;r2] [x1 y1 z1; x2 y2 z2]
     % Output [min(ri-ci) max(ri-ci)]
-    function [b, pairs] = calcBounds(swc, vs)
+    function [b, pairs] = calcBounds(swc)
         b = struct();
-        t = swc;
-        mr = vs;
-        pairs = [];
+        pairs = zeros(size(swc, 1), 2);
 
         for i = 1:size(swc, 1)
             % extract parent id
@@ -54,17 +52,16 @@ function [b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, voxelScale)
                 pairs(i, 2) = pairs(i, 1);
             end
 
-            b.a(i, :) = pairBounds(swc(i, :), pair, vs);
+            b.a(i, :) = pairBounds(swc(i, :), pair);
         end
 
-        function b = pairBounds(p1, p2, m)
+        function b = pairBounds(p1, p2)
             % ri: pair radii
             % pxi: pair coords
 
             ri = [p1(1, 5); p2(1, 5)];
             pxi = [p1(1, 2:4) - 1; p2(1, 2:4) + 1];
             b = {[round(min(pxi - ri)); ceil(max(pxi + ri))]};
-            ba = [min(pi - (ri + m)), max(pi + (ri + m))];
         end
 
     end

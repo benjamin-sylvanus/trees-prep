@@ -12,7 +12,7 @@ function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, empty
         z = z1 + (z2 - z1) * t;
         lminit = emptylogical;
 
-        if sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2) < r1
+        if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2 < r1 ^ 2
             list1 = lminit;
             list2 = ~list1;
         else
@@ -37,18 +37,16 @@ function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, empty
         % distance from p1 -> p2
         L = sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
 
-        c = (rd * l) ./ sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2);
+        c = (rd * l) ./ L;
         r = (c + r2) ./ sqrt(1 - ((rd / L) .^ 2));
 
         pos1 = dist2 < (r .^ 2); % smaller in one line and less than and equal
-        pos2 = (((x0 - x1) .^ 2 + (y0 - y1) .^ 2 + (z0 - z1) .^ 2) < ((r1 - eps) ^ 2)) | ...
-            (((x0 - x2) .^ 2 + (y0 - y2) .^ 2 + (z0 - z2) .^ 2) < ((r2 - eps) ^ 2));
+        pos2 = (((x0 - x1) .^ 2 + (y0 - y1) .^ 2 + (z0 - z1) .^ 2) < ((r1) ^ 2)) | ...
+            (((x0 - x2) .^ 2 + (y0 - y2) .^ 2 + (z0 - z2) .^ 2) < ((r2) ^ 2));
 
-        pos = lminit;
-
+        pos = lminit';
         pos(list1) = pos1(list1);
         pos(list2) = pos2(list2);
-
     end
 
 end
