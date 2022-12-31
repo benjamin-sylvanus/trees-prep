@@ -1,4 +1,4 @@
-function ci = extract_Range2(sub)
+function ci = extract_Range(sub)
     xi = sub(1, 1);
     yi = sub(1, 2);
     zi = sub(1, 3);

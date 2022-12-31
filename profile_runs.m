@@ -6,7 +6,7 @@ addpath(genpath("./"));
 addpath("/Users/bensylvanus/Library/Application Support/MathWorks/MATLAB Add-Ons/" + ...
 "Collections/random unit vector generator");
 
-tree = read_t('exampleTree.swc');
+tree = read_swc('exampleTree.swc');
 
 % clc;
 tic;
@@ -21,7 +21,7 @@ end
 toc;
 
 tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.5);
+[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 1);
 
 toc;
 tic;
@@ -67,18 +67,21 @@ X.step_num = 5e5; % # step
 X.particle_num = 1e3; % # particle
 %}
 %%
-step_num = 2e3;
+clc;
+step_num = 1e3;
 particle_num = 1e3;
-tic;
+% tic;
 sim = random_walker_sim(LUT, B, pairs, boundSize, swc{:, :}, 1, 0, step_num, true, particle_num);
 
-tic;
-sim = sim.eventloop2(step_num);
-toc;
 
-rwpath = sim.rwpath;
-hold on;
+% sim = sim.eventloop2(step_num);
+f = @() sim.eventloop2(step_num);
+t = timeit(f) 
+% toc;
 
-for i = 1:sim.particle_num
-    h = plot3([rwpath(:, i, 2)], [rwpath(:, i, 1)], [rwpath(:, i, 3)]);
-end
+% rwpath = sim.rwpath;
+% hold on;
+% 
+% for i = 1:sim.particle_num
+%     h = plot3([rwpath(:, i, 2)], [rwpath(:, i, 1)], [rwpath(:, i, 3)]);
+% end

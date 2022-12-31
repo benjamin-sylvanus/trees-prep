@@ -1,4 +1,4 @@
-function tree = read_t(filename)
+function tree = read_swc(filename)
     fid = fopen(filename);
     A = textscan (fid, '%s', 'delimiter', '\n');
     A = A{1};

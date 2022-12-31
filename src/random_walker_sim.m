@@ -241,14 +241,11 @@ classdef random_walker_sim
             obj.currstate = zeros(obj.particle_num, 1, "logical");
             obj.currstate(:) = true;
             obj.rwpath = zeros(iter, obj.particle_num, 3);
-            % fid = fopen("log.txt","a+");
-            %             fid = fopen("X.txt", "a+");
 
             while i <= iter
 
                 if mod(i, 1000) == 0
                     toc;
-                    % fprintf(fid, "I: %d\t%f\n", i, toc);
                     tic;
                 end
 
@@ -259,15 +256,10 @@ classdef random_walker_sim
 
                 for j = 1:obj.particle_num
                     obj.rwpath(i, j, :) = obj.particles{j}.curr(:)';
-                    %                     fprintf(fid, "%d ", obj.particles{j}.curr(1));
                 end
-
-                %                 fprintf(fid,"\n");
 
                 i = i + 1;
             end
-
-            %             fclose(fid);
 
         end
 

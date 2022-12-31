@@ -2,13 +2,14 @@ function [A, indicies, t2, LUT] = generateLUT(B, b)
     A = cell(0, 0);
     tic;
     LUT = zeros(B);
-    [ci] = cellfun(@extract_Range2, b, 'UniformOutput', false);
+    [ci] = cellfun(@extract_Range, b, 'UniformOutput', false);
 
-    bsx = repmat(B(1), size(b)); bsy = repmat(B(2), size(b)); bsz = repmat(B(3), size(b));
+    bsx = repmat(B(1), size(b));
+    bsy = repmat(B(2), size(b));
+    bsz = repmat(B(3), size(b));
 
-    bsize = [bsx(:), bsy(:), bsz(:)];
-    bsize = num2cell(bsize, 2);
-    inds = cellfun(@helper2, bsize, ci, 'UniformOutput', false);
+    bsize = num2cell([bsx(:), bsy(:), bsz(:)], 2);
+    inds = cellfun(@cf_sub2ind, bsize, ci, 'UniformOutput', false);
 
     indicies = 0;
     t2 = 0;
@@ -47,6 +48,10 @@ function [A, indicies, t2, LUT] = generateLUT(B, b)
         end
 
         LUT(idx) = sub;
+    end
+
+    function inds = cf_sub2ind(bsize, ci)
+        inds = sub2ind(bsize, ci(:, 1), ci(:, 2), ci(:, 3));
     end
 
 end

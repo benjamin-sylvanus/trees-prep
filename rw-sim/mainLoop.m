@@ -32,7 +32,7 @@ function [A] = mainLoop(tree, A, pairBounds, pairs)
             sum(pos, "all");
             p = patch('Faces', is.faces, 'Vertices', is.vertices);
             p.FaceColor = "green";
-            p.FaceAlpha = 0.05;
+            p.FaceAlpha = 0.5;
             p.EdgeColor = "none";
         end
 
