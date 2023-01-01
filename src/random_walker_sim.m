@@ -244,7 +244,7 @@ classdef random_walker_sim
 
             while i <= iter
 
-                if mod(i, 1000) == 0
+                if mod(i, 100) == 0
                     toc;
                     tic;
                 end
