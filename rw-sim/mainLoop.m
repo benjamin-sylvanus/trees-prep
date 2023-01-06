@@ -1,5 +1,5 @@
 function [A] = mainLoop(tree, A, pairBounds, pairs)
-    swc = tree{:, :};
+    swc = tree;
 
     tic;
 

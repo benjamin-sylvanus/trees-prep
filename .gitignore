@@ -1,6 +1,7 @@
 *.mat
 *.asv
 *.txt
-.vscode/settings.json
 *.swc
-oneconn.swc
+.vscode/settings.json
+rw-sim/codegen/
+/simulations

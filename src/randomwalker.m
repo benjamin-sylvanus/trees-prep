@@ -3,16 +3,18 @@ classdef randomwalker
     %   Detailed explanation goes here
 
     properties
-        curr;
-        next;
-        step;
-        iter;
-        rxyz;
+
+        curr; % current position [x;y;z]
+        next; % next position [x;y;z]
+        step; % step size
+        iter; % ^ depreciated total_iterations in simulation
+        rxyz; % N random xyz vectors -> 3 x chunkSize
+        chunkSize; % sub-unit of iteration. store values for current chunk only
     end
 
     methods (Access = public)
 
-        function obj = randomwalker(flag, step, bounds, swc, LUT, A, pairs, iter)
+        function obj = randomwalker(flag, step, bounds, swc, LUT, A, pairs, iter, chunkSize)
             %RANDOMWALKER Construct an instance of this class
             %   Detailed explanation goes here
 
@@ -20,8 +22,8 @@ classdef randomwalker
             swc, LUT, A, pairs);
             obj.step = step;
             obj.iter = iter;
+            obj.chunkSize = chunkSize;
             obj = obj.init_rands();
-
         end
 
         function obj = initPosition(obj, flag, sx, sy, sz, swc, LUT, A, pairs)
@@ -38,14 +40,6 @@ classdef randomwalker
                         % check that position is inside the cell
                         inside = checkpos(obj, ps, swc, LUT, A, pairs);
 
-                        % x0 = ps(1); y0 = ps(2); z0 = ps(3);
-
-                        %                     bx = ~ismember(x0,42:55);
-                        %                     by = ~ismember(y0,42:55);
-                        %                     bz = ~ismember(z0,10:35);
-                        %                     bcombined = bx |  by | bz;
-                        %
-                        %                     if inside(1) && bcombined
                         if inside(1)
                             pos = ps;
                             outside = false;
@@ -64,8 +58,7 @@ classdef randomwalker
         end
 
         function obj = init_rands(obj)
-            obj.rxyz = random_unit_vector(3, obj.iter);
-
+            obj.rxyz = random_unit_vector(3, obj.chunkSize);
         end
 
         function next = setnext(obj, i)
@@ -100,7 +93,19 @@ classdef randomwalker
                     p2 = swc(targetid, 2:5);
                     x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
                     x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-                    inside = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, zeros(1, 1, "logical")) | inside;
+                    dist = (x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2;
+
+                    if r1 > r2
+                        inside = pointbasedswc2v(x0, y0, z0, ...
+                            x1, x2, y1, ...
+                            y2, z1, z2, ...
+                            r1, r2, zeros(1, 1, "logical"), dist) | inside;
+                    else
+                        inside = pointbasedswc2v(x0, y0, z0, ...
+                            x2, x1, y2, ...
+                            y1, z2, z1, ...
+                            r2, r1, zeros(1, 1, "logical"), dist) | inside;
+                    end
 
                 end
 
