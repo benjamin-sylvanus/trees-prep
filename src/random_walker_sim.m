@@ -17,7 +17,7 @@ classdef random_walker_sim
         particles;
         particle_num;
         memoized_distance;
-        chunkSize;
+        chunkSize
     end
 
     methods (Access = public)
@@ -39,7 +39,7 @@ classdef random_walker_sim
             obj.logical_alloc = false;
             obj.currstate = init_in;
             obj.particle_num = particle_num;
-            obj.chunkSize = 5000;
+            obj.chunkSize = 100;
             obj.particles = obj.init_particles(iter, obj.chunkSize);
             obj.memoized_distance = memoized_distance;
         end
@@ -98,29 +98,38 @@ classdef random_walker_sim
         end
 
         function [particle, currstate] = cellgap(obj, particle, currstate, i, chunk)
-            % get positions
-            current = particle.curr;
-            next = particle.setnext(chunk);
 
-            % check positions
-            [~, inside] = obj.checkpos2(current, next, obj.swc, obj.index_array, currstate);
-
-            if inside
-                particle.curr = next;
-                currstate = true;
+            if (particle.flag)
+                particle.flag = false;
             else
-                % random walker was outside or crossed boundary
-                if (rand < obj.perm_prob)
+                % get positions
+                current = particle.curr;
+                next = particle.setnext(chunk);
+
+                % check positions
+                [~, inside] = obj.checkpos2(current, next, obj.swc, obj.index_array, currstate);
+
+                if inside
                     particle.curr = next;
-                    currstate = false;
+                    currstate = true;
+                else
+                    % random walker was outside or crossed boundary
+                    if (rand < obj.perm_prob)
+                        particle.curr = next;
+                        currstate = false;
+                    else
+                        particle.flag = true;
+                    end
+
+                    % TODO implement this outcome:
+                    % ^ LIMIT STEP WHEN:
+                    % * crosses out
+                    % ^ ENABLE STEP WHEN:
+                    % * crosses in
+                    % * remains out
+
                 end
 
-                % TODO implement this outcome:
-                % ^ LIMIT STEP WHEN:
-                % * crosses out
-                % ^ ENABLE STEP WHEN:
-                % * crosses in
-                % * remains out
             end
 
         end

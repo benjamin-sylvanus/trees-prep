@@ -32,8 +32,12 @@ toc;
 A = A(~cellfun('isempty', A));
 sizes = cellfun('size', A, 1);
 
+
+
 % get pairs from A
 B = cell(size(A, 1), 2);
+
+
 
 % extract node id [child, parent] -> linear index in B
 % B(i) = {[children],[parents]}
@@ -48,6 +52,7 @@ for i = 1:length(B)
     B{i, 1} = children;
     B{i, 2} = parents;
 end
+sizesB = cellfun("size",B,1);
 
 % extract node id [child, parent] -> linear index in B
 % B(i) = {[children],[parents]}
@@ -93,8 +98,11 @@ X.particle_num = 1e3; % # particle
 swcmat = swc{:, :};
 
 clc;
-step_num = 5e5;
-particle_num = 1e2;
+% at least 1e3 steps
+% at least 1e4 particles
+step_num = 1e3;
+particle_num = 1e4;
+% dependent on geometry and diffusion time
 step_size = 1;
 perm_prob = 0;
 init_in = true;
@@ -116,9 +124,9 @@ toc;
 % %
 % % f = @() sim.eventloop2(step_num);
 % % t = timeit(f);
-
+%%
 clearvars;
-load("simulations/sim3/matFileOfPositions.mat");
+load("simulations/sim1/matFileOfPositions.mat");
 
 dataunique = cell(size(data, 2), 1);
 
@@ -133,9 +141,11 @@ end
 
 hold on;
 axis equal;
-step = 10;
+step = 5;
 
 for i = 1:length(dataunique)
     rwpath = dataunique{i};
-    h = plot3([rwpath(1:step:end, 2)], [rwpath(1:step:end, 1)], [rwpath(1:step:end, 3)]);
+    h = plot3([rwpath(1:step:end, 2)], ...
+        [rwpath(1:step:end, 1)], ...
+        [rwpath(1:step:end, 3)]);
 end

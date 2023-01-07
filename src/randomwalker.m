@@ -10,6 +10,7 @@ classdef randomwalker
         iter; % ^ depreciated total_iterations in simulation
         rxyz; % N random xyz vectors -> 3 x chunkSize
         chunkSize; % sub-unit of iteration. store values for current chunk only
+        flag; % on failed exit i.e. collision we stop for 1 step.
     end
 
     methods (Access = public)
@@ -23,6 +24,7 @@ classdef randomwalker
             obj.step = step;
             obj.iter = iter;
             obj.chunkSize = chunkSize;
+            obj.flag = false;
             obj = obj.init_rands();
         end
 
