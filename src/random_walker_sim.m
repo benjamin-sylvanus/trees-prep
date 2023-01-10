@@ -39,7 +39,7 @@ classdef random_walker_sim
             obj.logical_alloc = false;
             obj.currstate = init_in;
             obj.particle_num = particle_num;
-            obj.chunkSize = 100;
+            obj.chunkSize = 10;
             obj.particles = obj.init_particles(iter, obj.chunkSize);
             obj.memoized_distance = memoized_distance;
         end
@@ -99,12 +99,21 @@ classdef random_walker_sim
 
         function [particle, currstate] = cellgap(obj, particle, currstate, i, chunk)
 
-            if (particle.flag)
-                particle.flag = false;
+            % flag would be arr(5);
+            % state is      arr(4);
+
+            state = particle(4);
+            flag = particle(5);
+            if (flag)
+                particle(5) = false;
             else
-                % get positions
-                current = particle.curr;
+                % get positions 
+                current = particle(1:3);
+
+
+
                 next = particle.setnext(chunk);
+
 
                 % check positions
                 [~, inside] = obj.checkpos2(current, next, obj.swc, obj.index_array, currstate);
@@ -192,7 +201,6 @@ classdef random_walker_sim
                 chunk_iter = chunk_iter + 1; i = i + 1;
             end
 
-            %             fclose(fid);
         end
 
         function [obj, inside] = checkpos2(obj, curr, next, swc, A, currstate)

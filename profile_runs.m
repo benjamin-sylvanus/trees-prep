@@ -1,7 +1,7 @@
 clc; clearvars; close all;
 tic;
 
-addpath(genpath("../../treestoolbox"));
+% addpath(genpath("../../treestoolbox"));
 addpath(genpath("./"));
 
 % addpath("/Users/bensylvanus/Library/Application Support/MathWorks/MATLAB Add-Ons/" + ...
@@ -100,8 +100,8 @@ swcmat = swc{:, :};
 clc;
 % at least 1e3 steps
 % at least 1e4 particles
-step_num = 1e3;
-particle_num = 1e4;
+step_num = 1e1;
+particle_num = 1e5;
 % dependent on geometry and diffusion time
 step_size = 1;
 perm_prob = 0;
@@ -111,7 +111,9 @@ tic;
 sim = random_walker_sim(LUT, B, pairs, boundSize, swcmat, step_size, ...
     perm_prob, step_num, init_in, particle_num, memoized_distance(:, 3));
 
-sim = sim.eventloop2(step_num);
+% sim = sim.eventloop2(step_num);
+
+sim = eventloop(sim,step_num);
 
 toc;
 
@@ -125,8 +127,8 @@ toc;
 % % f = @() sim.eventloop2(step_num);
 % % t = timeit(f);
 %%
-clearvars;
-load("simulations/sim1/matFileOfPositions.mat");
+% clearvars;
+load("simulations/sim2/matFileOfPositions.mat");
 
 dataunique = cell(size(data, 2), 1);
 
