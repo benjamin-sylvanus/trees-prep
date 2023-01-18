@@ -5,7 +5,7 @@ function [LUT, B, pairs, boundSize, swc, memoized_distance] = prepSim()
     % addpath("/Users/bensylvanus/Library/Application Support/MathWorks/MATLAB Add-Ons/" + ...
     % "Collections/random unit vector generator");
 
-    tree = read_swc('democell.swc');
+    tree = read_swc('exampleTree.swc');
 
     % clc;
     tic;
@@ -20,7 +20,7 @@ function [LUT, B, pairs, boundSize, swc, memoized_distance] = prepSim()
     toc;
 
     tic;
-    [b, swc, boundSize, pairs, ~] = initbounds(tree, dists, 0.05);
+    [b, swc, boundSize, pairs, ~] = initbounds(tree, dists, 0.8);
 
     toc;
     tic;
