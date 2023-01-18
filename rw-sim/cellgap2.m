@@ -1,4 +1,4 @@
-function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table)
+function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,step)
 
     % flag would be arr(5);
     % state is      arr(4);
@@ -6,7 +6,7 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table)
     state = particle(4);
     flag = particle(5);
 %     TODO add step back in to passed params
-    step = 1;
+    step;
 
     if (flag)
         flag = false;

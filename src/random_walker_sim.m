@@ -148,8 +148,8 @@ classdef random_walker_sim
             chunk_iter = 1;
             obj.currstate = zeros(obj.particle_num, 1, "logical");
             obj.currstate(:) = true;
-            [~, ~, matObj] = obj.setsimulationpath(iter, obj.particle_num);
-            obj.rwpath = zeros(obj.chunkSize, obj.particle_num, 3);
+            [~, ~, matObj,initPosObj] = obj.setsimulationpath(iter, obj.particle_num);
+            obj.rwpath = zeros(iter, obj.particle_num, 3);
 
             while i <= iter
 
@@ -272,7 +272,7 @@ classdef random_walker_sim
     methods (Static)
 
         % Todo Actually implement a file system this is just a temp method for Chunk testing
-        function [path, fileName, matObj] = setsimulationpath(iter, particle_num)
+        function [path, fileName, matObj,initPosObj] = setsimulationpath(iter, particle_num)
             % Get the folders containing sim
             folders = dir("./simulations/sim*");
             % Set the next folder name
@@ -284,13 +284,18 @@ classdef random_walker_sim
             path = str;
 
             % Filename of Simulation results
-            fileName = str + '/matFileOfPositions.mat';
+            fileName = str + '/DATA.mat';
+            initialPos = str + '/initialPos.mat';
 
             % Init matfile with memory alloc of (step_num,particle_num,[x,y,z])
             % Enables write to portion of matfile without loading entire file into memory
             matObj = matfile(fileName);
             matObj.Properties.Writable = true;
             matObj.data(iter, particle_num, 3) = 0;
+            initPosObj = matfile(initialPos);
+            initPosObj.Properties.Writable = true;
+            initPosObj.data(particle_num, 3) = 0;
+            
         end
 
         function inside = insideLogic(currinside, nextinside)

@@ -1,109 +1,16 @@
+%%
 clc; clearvars; close all;
-tic;
-
-% addpath(genpath("../../treestoolbox"));
-addpath(genpath("./"));
-
-% addpath("/Users/bensylvanus/Library/Application Support/MathWorks/MATLAB Add-Ons/" + ...
-% "Collections/random unit vector generator");
-
-tree = read_swc('exampleTree.swc');
-
-% clc;
-tic;
-% clearvars;
-% load("tree.mat", "tree");
-dists = zeros(height(tree), 1);
-
-for i = 2:height(tree)
-    dists(i, 1) = calcdists(tree, i);
-end
-
-toc;
-
-tic;
-[b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, 0.8);
-
-toc;
-tic;
-[A, indicies, t2, LUT] = generateLUT(boundSize, b);
-toc;
-
-A = A(~cellfun('isempty', A));
-sizes = cellfun('size', A, 1);
-
-
-
-% get pairs from A
-B = cell(size(A, 1), 2);
-
-
-
-% extract node id [child, parent] -> linear index in B
-% B(i) = {[children],[parents]}
-for i = 1:length(B)
-    pairlist = A{i};
-    ps = pairs(pairlist, :);
-
-    % pairlist => [child, parent]
-    children = ps(:, 1);
-    parents = ps(:, 2);
-
-    B{i, 1} = children;
-    B{i, 2} = parents;
-end
-sizesB = cellfun("size",B,1);
-
-% extract node id [child, parent] -> linear index in B
-% B(i) = {[children],[parents]}
-memoized_distance = zeros(length(pairs), 3);
-
-for i = 1:length(pairs)
-    % extract child and parent ids
-    baseid = pairs(i, 1); targetid = pairs(i, 2);
-
-    p1 = swc{baseid, 2:5};
-    p2 = swc{targetid, 2:5};
-
-    x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
-    x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
-
-    memoized_distance(i, 3) = (x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2;
-    memoized_distance(i, 2) = targetid;
-    memoized_distance(i, 1) = baseid;
-end
-
-%%
-% TODO only reasonable improvement would be vectorized rw to avoid for loop
-% TODO and to convert sub2ind calculations to custom function
-swcmat = swc{:, :};
-%%
-close all;
-figure();
-hold on;
-[~] = mainLoop(swcmat, zeros(boundSize), b, pairs);
-% axis equal;
-% view(3);
-hold on;
-
-clc;
-%{
-% TODO implement time step determine how to walk concurrently
-X.time_step = 2e-4; % Time of each step (ms)
-X.step_num = 5e5; % # step
-X.particle_num = 1e3; % # particle
-%}
-%%
+[LUT, B, pairs, boundSize, swc, memoized_distance] = prepSim();
 
 swcmat = swc{:, :};
-
+clear sim;
 clc;
 % at least 1e3 steps
-% at least 1e4 particles
-step_num = 1e1;
-particle_num = 1e5;
+% at least 1e4 particles 
+step_num = 1e3;
+particle_num = 1e4;
 % dependent on geometry and diffusion time
-step_size = 1;
+step_size = 0.2;
 perm_prob = 0;
 init_in = true;
 tic;
@@ -111,26 +18,66 @@ tic;
 sim = random_walker_sim(LUT, B, pairs, boundSize, swcmat, step_size, ...
     perm_prob, step_num, init_in, particle_num, memoized_distance(:, 3));
 
-% sim = sim.eventloop2(step_num);
-
 sim = eventloop(sim,step_num);
 
 toc;
 
-% rwpath = sim.rwpath;
-% % hold on;
-% %
-% % for i = 1:sim.particle_num
-% %     h = plot3([rwpath(:, i, 2)], [rwpath(:, i, 1)], [rwpath(:, i, 3)]);
-% % end
-% %
-% % f = @() sim.eventloop2(step_num);
-% % t = timeit(f);
+% fid=fopen('/Users/benjaminsylvanus/CLionProjects/testclion/data/LUT.bin','w');
+% fwrite(fid,lut,"uint16","b");
 %%
-% clearvars;
-load("simulations/sim2/matFileOfPositions.mat");
 
+%%
+clearvars;
+load("simulations/sim12/DATA.mat");
+tstep = 2e-4;
+t = tstep * (1:size(data,1));
+initpos = load("simulations/sim12/initialpos.mat").data;
+
+pos_repeated = repelem(initpos,size(data,1),1);
+pos_repeated  =reshape(pos_repeated, size(data));
+
+displacement = data - pos_repeated;
+
+displaceX = displacement(:,:,1);
+displaceY = displacement(:,:,2);
+displaceZ = displacement(:,:,3);
+
+x_example = displaceX(1,:);
+y_example = displaceY(1,:);
+z_example = displaceZ(1,:);
+
+
+
+sqrt(mean(x_example))
+xres = zeros(size(x_example));
+yres = zeros(size(y_example));
+zres = zeros(size(z_example));
+
+for i = 1:size(x_example,2)
+    xres(i) = sqrt(mean(abs(x_example(1:i))));
+    yres(i) = sqrt(mean(abs(y_example(1:i))));
+    zres(i) = sqrt(mean(abs(z_example(1:i))));
+end
+
+diffx = xres./(2*t);
+diffy = yres./(2*t);
+diffz = zres./(2*t);
+
+clf;
+hold on;
+plot(diffx,t);
+plot(diffy,t);
+plot(diffz,t);
+% (r,c)
+% r: particle; c: steps;
+
+% sqrt(mean(displacement))/2t
+%%
+clearvars;
+load("simulations/sim5/DATA.mat");
 dataunique = cell(size(data, 2), 1);
+
+
 
 for i = 1:size(data, 2)
     q = data(:, i, :);
@@ -139,11 +86,11 @@ for i = 1:size(data, 2)
     dataunique{i} = unique(q, "rows", "stable");
 end
 
-% data = unique(data,"stable");
+
 
 hold on;
 axis equal;
-step = 5;
+step = 1;
 
 for i = 1:length(dataunique)
     rwpath = dataunique{i};
