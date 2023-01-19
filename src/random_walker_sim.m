@@ -17,7 +17,8 @@ classdef random_walker_sim
         particles;
         particle_num;
         memoized_distance;
-        chunkSize
+        chunkSize;
+        path;
     end
 
     methods (Access = public)
@@ -104,16 +105,14 @@ classdef random_walker_sim
 
             state = particle(4);
             flag = particle(5);
+
             if (flag)
                 particle(5) = false;
             else
-                % get positions 
+                % get positions
                 current = particle(1:3);
 
-
-
                 next = particle.setnext(chunk);
-
 
                 % check positions
                 [~, inside] = obj.checkpos2(current, next, obj.swc, obj.index_array, currstate);
@@ -148,7 +147,8 @@ classdef random_walker_sim
             chunk_iter = 1;
             obj.currstate = zeros(obj.particle_num, 1, "logical");
             obj.currstate(:) = true;
-            [~, ~, matObj,initPosObj] = obj.setsimulationpath(iter, obj.particle_num);
+            [path, ~, matObj, initPosObj] = obj.setsimulationpath(iter, obj.particle_num);
+            obj.path = path;
             obj.rwpath = zeros(iter, obj.particle_num, 3);
 
             while i <= iter
@@ -272,7 +272,7 @@ classdef random_walker_sim
     methods (Static)
 
         % Todo Actually implement a file system this is just a temp method for Chunk testing
-        function [path, fileName, matObj,initPosObj] = setsimulationpath(iter, particle_num)
+        function [path, fileName, matObj, initPosObj] = setsimulationpath(iter, particle_num)
             % Get the folders containing sim
             folders = dir("./simulations/sim*");
             % Set the next folder name
@@ -295,7 +295,7 @@ classdef random_walker_sim
             initPosObj = matfile(initialPos);
             initPosObj.Properties.Writable = true;
             initPosObj.data(particle_num, 3) = 0;
-            
+
         end
 
         function inside = insideLogic(currinside, nextinside)
