@@ -17,7 +17,8 @@ classdef random_walker_sim
         particles;
         particle_num;
         memoized_distance;
-        chunkSize
+        chunkSize;
+        path;
     end
 
     methods (Access = public)
@@ -39,7 +40,7 @@ classdef random_walker_sim
             obj.logical_alloc = false;
             obj.currstate = init_in;
             obj.particle_num = particle_num;
-            obj.chunkSize = 100;
+            obj.chunkSize = 10;
             obj.particles = obj.init_particles(iter, obj.chunkSize);
             obj.memoized_distance = memoized_distance;
         end
@@ -99,11 +100,18 @@ classdef random_walker_sim
 
         function [particle, currstate] = cellgap(obj, particle, currstate, i, chunk)
 
-            if (particle.flag)
-                particle.flag = false;
+            % flag would be arr(5);
+            % state is      arr(4);
+
+            state = particle(4);
+            flag = particle(5);
+
+            if (flag)
+                particle(5) = false;
             else
                 % get positions
-                current = particle.curr;
+                current = particle(1:3);
+
                 next = particle.setnext(chunk);
 
                 % check positions
@@ -139,8 +147,9 @@ classdef random_walker_sim
             chunk_iter = 1;
             obj.currstate = zeros(obj.particle_num, 1, "logical");
             obj.currstate(:) = true;
-            [~, ~, matObj] = obj.setsimulationpath(iter, obj.particle_num);
-            obj.rwpath = zeros(obj.chunkSize, obj.particle_num, 3);
+            [path, ~, matObj, initPosObj] = obj.setsimulationpath(iter, obj.particle_num);
+            obj.path = path;
+            obj.rwpath = zeros(iter, obj.particle_num, 3);
 
             while i <= iter
 
@@ -192,7 +201,6 @@ classdef random_walker_sim
                 chunk_iter = chunk_iter + 1; i = i + 1;
             end
 
-            %             fclose(fid);
         end
 
         function [obj, inside] = checkpos2(obj, curr, next, swc, A, currstate)
@@ -264,7 +272,7 @@ classdef random_walker_sim
     methods (Static)
 
         % Todo Actually implement a file system this is just a temp method for Chunk testing
-        function [path, fileName, matObj] = setsimulationpath(iter, particle_num)
+        function [path, fileName, matObj, initPosObj] = setsimulationpath(iter, particle_num)
             % Get the folders containing sim
             folders = dir("./simulations/sim*");
             % Set the next folder name
@@ -276,13 +284,18 @@ classdef random_walker_sim
             path = str;
 
             % Filename of Simulation results
-            fileName = str + '/matFileOfPositions.mat';
+            fileName = str + '/DATA.mat';
+            initialPos = str + '/initialPos.mat';
 
             % Init matfile with memory alloc of (step_num,particle_num,[x,y,z])
             % Enables write to portion of matfile without loading entire file into memory
             matObj = matfile(fileName);
             matObj.Properties.Writable = true;
             matObj.data(iter, particle_num, 3) = 0;
+            initPosObj = matfile(initialPos);
+            initPosObj.Properties.Writable = true;
+            initPosObj.data(particle_num, 3) = 0;
+
         end
 
         function inside = insideLogic(currinside, nextinside)
