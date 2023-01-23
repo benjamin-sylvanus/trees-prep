@@ -87,15 +87,17 @@ classdef random_walker_sim
         function particles = init_particles(obj, iter, chunk)
             % create n-randomwalkers
             particles = cell(obj.particle_num, 1);
-            tic;
+            t0 = tic;
 
             for i = 1:obj.particle_num
+                t=tic;
                 % initialize randomwalker
                 particles{i} = randomwalker(true, obj.step_size, obj.boundSize, ...
                 obj.swc, obj.lookup_table, obj.index_array, obj.pairs, iter, chunk);
+                fprintf("Initialized %d: %f seconds\n",i,toc(t));
             end
 
-            fprintf("Particle Init: %f seconds\n", toc);
+            fprintf("Particle Init: %f seconds\n", toc(t0));
         end
 
         function [particle, currstate] = cellgap(obj, particle, currstate, i, chunk)

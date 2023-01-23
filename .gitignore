@@ -5,3 +5,5 @@
 .vscode/settings.json
 rw-sim/codegen/
 /simulations
+swc_test.m
+writeDataToMat.m

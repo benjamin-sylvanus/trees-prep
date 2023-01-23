@@ -1,25 +1,42 @@
-function [b, swc, boundSize, pairs, VSIZE] = initbounds(tree, dists, voxelScale)
+function [b, swc, boundSize, pairs, VSIZE, ranges] = initbounds(tree, dists, voxelScale)
 
     swc = tree;
-    swc(1, "Parent") = {1};
-    X = swc.X + 2; Y = swc.Y + 2; Z = swc.Z + 2;
-    dim = [X Y Z];
 
+    swc(1, "Parent") = {1};
+    
+    X = swc.X + 2; Y = swc.Y + 2; Z = swc.Z + 2;
+
+    dim = [X Y Z];
+    
     % Threshold Radii
     [~, ~, bin] = histcounts(swc.Radii, 5);
+
     avg = mean(swc.Radii(bin == 1));
+
     swc.Radii(swc.Radii < avg) = avg;
+
     r = swc.Radii;
-    ranges = [min(dim - r); max(dim + r)]; % (min - ri) (max + ri)
+
+    % (min - ri) (max + ri)
+    ranges = [min(dim - r); max(dim + r)]; 
+    
+    % threshold radius -> no 
+    % thresholding with vsize does result in scaling data;
+    % could store previous or 
 
     % Define Voxel Size
-    VSIZE = voxelScale * min(dists(2:end));
-
+    % TODO remove voxelScale or extract scalar for d variable calc;
+%     VSIZE = voxelScale * min(dists(2:end));
+    VSIZE = min(dists(2:end)) * voxelScale;
+    
     % Translate X,Y,Z
-    tran = ((dim - ranges(1, :)) ./ VSIZE) + 3;
+    tran = ((dim - ranges(1, :)) ./ VSIZE) + 2;
+
+    % (xyz-2)*VSIZE+ranges(1,:);
+    % unscaled_radius = R * VSIZE;
 
     % Update Bounds
-    boundSize = ceil((ranges(2, :) - ranges(1, :)) ./ VSIZE) + 6;
+    boundSize = ceil((ranges(2, :) - ranges(1, :)) ./ VSIZE) + 4;
 
     % Radii Scale
     R = swc.Radii ./ (VSIZE);
