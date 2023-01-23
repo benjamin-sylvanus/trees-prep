@@ -60,7 +60,7 @@ classdef randomwalker
         end
 
         function obj = init_rands(obj)
-            obj.rxyz = random_unit_vector(3, obj.chunkSize);
+%             obj.rxyz = random_unit_vector(3, obj.iter);
         end
 
         function next = setnext(obj, i)
@@ -121,7 +121,7 @@ classdef randomwalker
 
         function pos = randxyz(sx, sy, sz)
 %             x = randi([round(sx / 4), round(3 * sx / 4)], 1000, 1); y = randi([round(sy / 4), round(3 * sy / 4)], 1000, 1); z = randi([round(sz / 4), round(3 * sz / 4)], 1000, 1);
-            x = randi(sx,1000,1); y = randi(sy,1000,1); z = randi(sz,1000,1);
+            x = randi(sx,10000,1); y = randi(sy,10000,1); z = randi(sz,10000,1);
             pos = [x, y, z];
         end
 
