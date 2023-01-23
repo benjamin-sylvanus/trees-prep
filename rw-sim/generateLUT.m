@@ -51,7 +51,11 @@ function [A, indicies, t2, LUT] = generateLUT(B, b)
     end
 
     function inds = cf_sub2ind(bsize, ci)
-        inds = sub2ind(bsize, ci(:, 1), ci(:, 2), ci(:, 3));
+        i1 = ci(:,1);
+        i2 = ci(:,2);
+        i3 = ci(:,3);
+        inds = i1 + (i2-1)*bsize(1) + (i3-1)*bsize(1)*bsize(2);
+%         inds = sub2ind(bsize, ci(:, 1), ci(:, 2), ci(:, 3));
     end
 
 end

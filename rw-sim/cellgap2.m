@@ -1,12 +1,7 @@
-function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,step)
-
-    % flag would be arr(5);
-    % state is      arr(4);
+function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,step,perm_prob,crand)
     position = particle(1:3);
     state = particle(4);
     flag = particle(5);
-%     TODO add step back in to passed params
-    step;
 
     if (flag)
         flag = false;
@@ -14,7 +9,7 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
         % get positions
 %         current = position;
 
-        next = setnext(position', step);
+        next = setnext(position', step,crand);
 
         % check positions
         inside = checkpos(next, swc, index_array, state,boundSize,lookup_table);
@@ -25,19 +20,12 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
         else
             % random walker was outside or crossed boundary
             % TODO ADD PROB back in... needs to be passed
-            if (rand < 0)
+            if (rand < perm_prob)
                 position = next;
                 state = false;
             else
                 flag = true;
             end
-
-            % TODO implement this outcome:
-            % ^ LIMIT STEP WHEN:
-            % * crosses out
-            % ^ ENABLE STEP WHEN:
-            % * crosses in
-            % * remains out
 
         end
 
@@ -48,9 +36,13 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
     particle(4) = state;
     particle(5) = flag;
 
-    function next = setnext(position, step)
-        vect = random_unit_vector(3, 1);
-        delta = vect * step;
+    function next = setnext(position, step, crand)
+%         v = normr(rand(1,3));
+%         v = randn(1,1,3)';
+%         v = v./sqrt(sum(v,2)); 
+%         vect = random_unit_vector(3, 1);
+%         vect = cos(180*pi*normr(rand(1,3)))';
+        delta = crand * step;
         next = position + delta;
 
     end
@@ -134,16 +126,15 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
         elseif ~currinside && nextinside
 
             disp("RW Outside NextInside: ");
-            inside = 0;
+            inside = 1;
 
             % both positions outside
         elseif ~currinside && ~nextinside
             disp("RW Outside: ");
-
-            inside = 0;
+            inside = 1;
         else
             disp("OUTSIDE: ")
-            inside = 0;
+            inside = 1;
         end
 
     end
@@ -160,7 +151,11 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
 
             % convert subscript index to linear index
             % ^ (faster than using sub index to get values from lookup table)
-            NVOXES = sub2ind(boundSize, NVOXES(1, :), NVOXES(2, :), NVOXES(3, :));
+            i1 = NVOXES(1,:);
+            i2 = NVOXES(2,:);
+            i3 = NVOXES(3,:);
+            NVOXES = i1 + (i2-1)*boundSize(1) + (i3-1)*boundSize(1)*boundSize(2);
+%             NVOXES = sub2ind(boundSize, NVOXES(1, :), NVOXES(2, :), NVOXES(3, :));
 
             % extract [child,parent] node ids
             nindicies = lookup_table(NVOXES);
@@ -172,7 +167,8 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
     function inds = combineind(nind)
 
         % extract non-zero elements
-        nidx = nind > 0; tn = nind(nidx);
+%         nidx = nind > 0; 
+        tn = nind(nind>0);
 
         % logicals for non empty index arrays
         n = ~isempty(tn);
