@@ -16,11 +16,11 @@ clear sim;
 clc;
 % at least 1e3 steps
 % at least 1e4 particles
-step_num = 5e5;
-particle_num = 1e3;
+step_num = 1e3;
+particle_num = 1e5;
 % dependent on geometry and diffusion time
 D0 = 2; % 2um^2/ms;
-d = min(swc.Radii)*0.1;
+d = min(swc.Radii)*0.5;
 tstep = d/6/D0;
 step_size = d;
 perm_prob = 0.0000;
