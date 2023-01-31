@@ -38,8 +38,8 @@ function pos = pointbasedswc2v(x0, y0, z0, x1, x2, y1, y2, z1, z2, r1, r2, empty
             pos1 = dist2 < (r .^ 2); % smaller in one line and less than and equal
             pos = pos1;
         else
-            pos2 = (((x0 - x1) .^ 2 + (y0 - y1) .^ 2 + (z0 - z1) .^ 2) < ((r1) ^ 2)) | ...
-                (((x0 - x2) .^ 2 + (y0 - y2) .^ 2 + (z0 - z2) .^ 2) < ((r2) ^ 2));
+            pos2 = (((x0 - x1) .^ 2 + (y0 - y1) .^ 2 + (z0 - z1) .^ 2) <= ((r1-eps) ^ 2)) | ...
+                (((x0 - x2) .^ 2 + (y0 - y2) .^ 2 + (z0 - z2) .^ 2) <= ((r2-eps) ^ 2));
             pos = pos2;
         end
 

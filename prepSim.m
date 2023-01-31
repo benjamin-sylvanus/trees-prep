@@ -1,32 +1,41 @@
-function [LUT, B, pairs, boundSize, swc, memoized_distance,A,vsize,ranges] = prepSim(voxelscale)
-    % addpath(genpath("../../treestoolbox"));
+function ...
+        [ ...
+         LUT, ...
+         B, ...
+         pairs, ...
+         boundSize, ...
+         swc, ...
+         memoized_distance, ...
+         A, ...
+         vsize, ...
+         ranges, ...
+         b ...
+     ] ...
+        = prepSim(voxelscale, filename, scale)
     addpath(genpath("./"));
+    tree = read_swc(filename);
 
-    % addpath("/Users/bensylvanus/Library/Application Support/MathWorks/MATLAB Add-Ons/" + ...
-    % "Collections/random unit vector generator");
+    % neuroglancer scale [8nm 8nm 33nm]
+    % size is [515892;356400;5293]
 
-    tree = read_swc('democell10ele.swc');
+    % nm * 1e-3 = um
+    % [x/8 y/8 z/33]*1e-3
+    % * any scale nm -> scalenm = [sx sy sz]
+    % * scalenm -> passed params
+    %     tree{:,2:4} = tree{:,2:4}; % units [xyz]: nm;
+    %     tree{:,2:5} = tree{:,2:5}.*1e-3; % units [xyz&r]: um;
 
-    tree{:,2:5} = tree{:,2:5}.*1e-3;
-    
-    % clc;
+    % scale should convert swc coords -> um;
+    tree{:, 2:5} = tree{:, 2:5} .* scale; % units [xyz&r]: um;
+
+    dists = setdists(tree);
+
     tic;
-    % clearvars;
-    % load("tree.mat", "tree");
-    dists = zeros(height(tree), 1);
-
-    for i = 2:height(tree)
-        dists(i, 1) = calcdists(tree, i);
-    end
-
+    [b, swc, boundSize, pairs, vsize, ranges] = initbounds(tree, dists, voxelscale);
     toc;
 
     tic;
-    [b, swc, boundSize, pairs, vsize,ranges] = initbounds(tree, dists, voxelscale);
-
-    toc;
-    tic;
-    [A, indicies, t2, LUT] = generateLUT(boundSize, b);
+    [A, LUT] = generateLUT(boundSize, b);
     toc;
 
     A = A(~cellfun('isempty', A));
@@ -67,4 +76,5 @@ function [LUT, B, pairs, boundSize, swc, memoized_distance,A,vsize,ranges] = pre
         memoized_distance(i, 1) = baseid;
     end
 
+%     mainLoop(swc{:,:},LUT,b,pairs);
 end

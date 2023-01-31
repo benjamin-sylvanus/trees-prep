@@ -6,6 +6,8 @@ function [A] = mainLoop(tree, A, pairBounds, pairs)
     for i = 1:size(pairs, 1)
 
         Bound = pairBounds{i, 1};
+        Bound(1,:) = Bound(1,:)-2;
+        Bound(2,:) = Bound(2,:)+2;
 
         Sx = Bound(1, 1); Sy = Bound(1, 2); Sz = Bound(1, 3);
 
@@ -29,11 +31,11 @@ function [A] = mainLoop(tree, A, pairBounds, pairs)
 
         if sum(pos, "all") > 0
             is = isosurface(y0, x0, z0, pos, 0);
-            sum(pos, "all");
             p = patch('Faces', is.faces, 'Vertices', is.vertices);
             p.FaceColor = "green";
             p.FaceAlpha = 0.1;
             p.EdgeColor = "none";
+            axis equal
         end
 
         A(Sx:Nx, Sy:Ny, Sz:Nz) = pos_fill | pos;

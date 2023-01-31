@@ -1,25 +1,24 @@
-function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,step,perm_prob,crand)
+function particle = cellgap2(particle, swc, index_array, boundSize, lookup_table, step, perm_prob, crand)
     position = particle(1:3);
     state = particle(4);
     flag = particle(5);
 
     if (flag)
-        flag = false;
+        % If the particle just collided with boundary,
+        % do nothing this step
+        flag = false; % change flag for next step
     else
-        % get positions
-%         current = position;
-
-        next = setnext(position', step,crand);
+        % set next position
+        next = setnext(position', step, crand);
 
         % check positions
-        inside = checkpos(next, swc, index_array, state,boundSize,lookup_table);
+        collided = checkpos(next, swc, index_array, state, boundSize, lookup_table);
 
-        if inside
+        if collided
             position = next;
             state = true;
         else
             % random walker was outside or crossed boundary
-            % TODO ADD PROB back in... needs to be passed
             if (rand < perm_prob)
                 position = next;
                 state = false;
@@ -37,19 +36,13 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
     particle(5) = flag;
 
     function next = setnext(position, step, crand)
-%         v = normr(rand(1,3));
-%         v = randn(1,1,3)';
-%         v = v./sqrt(sum(v,2)); 
-%         vect = random_unit_vector(3, 1);
-%         vect = cos(180*pi*normr(rand(1,3)))';
         delta = crand * step;
         next = position + delta;
-
     end
 
-    function inside = checkpos(next, swc, A, currstate,boundSize,lookup_table)
+    function inside = checkpos(next, swc, A, currstate, boundSize, lookup_table)
         % extract {child,parent} Ids of segments near location of randomwalker
-        indicies = preprocesses(next,boundSize,lookup_table);
+        indicies = preprocesses(next, boundSize, lookup_table);
 
         % if there are elements of the cell near the random walker
         if (indicies ~= 0)
@@ -90,7 +83,7 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
             x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
             x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
 
-%             dist = memoized_distance(children(i));
+            %             dist = memoized_distance(children(i));
             dist = (x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2;
 
             if r1 > r2
@@ -139,36 +132,36 @@ function particle = cellgap2(particle, swc, index_array,boundSize,lookup_table,s
 
     end
 
-    function indicies = preprocesses(next,boundSize,lookup_table)
-            % convert float to voxel
-            nvoxes = float2vox(next)';
+    function indicies = preprocesses(next, boundSize, lookup_table)
+        % convert float to voxel
+        nvoxes = float2vox(next)';
 
-            % logical array for elements within range 0 < n < boundSize
-            nv = all(nvoxes > 0, 2) & all(nvoxes < boundSize, 2);
+        % logical array for elements within range 0 < n < boundSize
+        nv = all(nvoxes > 0, 2) & all(nvoxes < boundSize, 2);
 
-            % extract elements within range
-            NVOXES = nvoxes(nv, :)';
+        % extract elements within range
+        NVOXES = nvoxes(nv, :)';
 
-            % convert subscript index to linear index
-            % ^ (faster than using sub index to get values from lookup table)
-            i1 = NVOXES(1,:);
-            i2 = NVOXES(2,:);
-            i3 = NVOXES(3,:);
-            NVOXES = i1 + (i2-1)*boundSize(1) + (i3-1)*boundSize(1)*boundSize(2);
-%             NVOXES = sub2ind(boundSize, NVOXES(1, :), NVOXES(2, :), NVOXES(3, :));
+        % convert subscript index to linear index
+        % ^ (faster than using sub index to get values from lookup table)
+        i1 = NVOXES(1, :);
+        i2 = NVOXES(2, :);
+        i3 = NVOXES(3, :);
+        NVOXES = i1 + (i2 - 1) * boundSize(1) + (i3 - 1) * boundSize(1) * boundSize(2);
+        %             NVOXES = sub2ind(boundSize, NVOXES(1, :), NVOXES(2, :), NVOXES(3, :));
 
-            % extract [child,parent] node ids
-            nindicies = lookup_table(NVOXES);
+        % extract [child,parent] node ids
+        nindicies = lookup_table(NVOXES);
 
-            % return non-zero indicies or return 0
-            indicies = combineind(nindicies');
+        % return non-zero indicies or return 0
+        indicies = combineind(nindicies');
     end
 
     function inds = combineind(nind)
 
         % extract non-zero elements
-%         nidx = nind > 0; 
-        tn = nind(nind>0);
+        %         nidx = nind > 0;
+        tn = nind(nind > 0);
 
         % logicals for non empty index arrays
         n = ~isempty(tn);
