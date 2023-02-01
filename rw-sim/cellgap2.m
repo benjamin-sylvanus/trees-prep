@@ -14,10 +14,16 @@ function particle = cellgap2(particle, swc, index_array, boundSize, lookup_table
         % check positions
         collided = checkpos(next, swc, index_array, state, boundSize, lookup_table);
 
-        if collided
+        if collided.state == "INSIDE"
             position = next;
             state = true;
-        else
+        elseif collided.state == "OUTSIDE"
+            position = next;
+            state = false;
+        elseif collided.state == "CROSSIN"
+            position = next;
+            state = true;
+        elseif collided.state == "CROSSOUT"
             % random walker was outside or crossed boundary
             if (rand < perm_prob)
                 position = next;
@@ -72,7 +78,6 @@ function particle = cellgap2(particle, swc, index_array, boundSize, lookup_table
 
         swc1 = swc(children, 2:5);
         swc2 = swc(parents, 2:5);
-
         % for each pair: check if point is inside
         for i = 1:length(children)
 
@@ -83,7 +88,6 @@ function particle = cellgap2(particle, swc, index_array, boundSize, lookup_table
             x1 = p1(1); y1 = p1(2); z1 = p1(3); r1 = p1(4);
             x2 = p2(1); y2 = p2(2); z2 = p2(3); r2 = p2(4);
 
-            %             dist = memoized_distance(children(i));
             dist = (x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2;
 
             if r1 > r2
@@ -105,30 +109,45 @@ function particle = cellgap2(particle, swc, index_array, boundSize, lookup_table
     end
 
     function inside = insideLogic(currinside, nextinside)
-        % both positions within a connection
-        if currinside && nextinside
-            inside = 1;
-            % disp("Was just inside")
 
-            % current pos in, next pos out
-        elseif currinside && ~nextinside
-            % disp("next_outside")
-            inside = 0;
+            if (currinside&&nextinside)
+                enum=enumstates.inside;
+            end
+             if (~currinside&&~nextinside)
+                 enum=enumstates.outside;
+             end
+            if (currinside&&~nextinside)
+                enum=enumstates.crossout;
+            end
+            if (~currinside&&nextinside)
+                enum =  enumstates.crossin;
+            end
 
-            % current pos out, next pos in
-        elseif ~currinside && nextinside
-
-            disp("RW Outside NextInside: ");
-            inside = 1;
-
-            % both positions outside
-        elseif ~currinside && ~nextinside
-            disp("RW Outside: ");
-            inside = 1;
-        else
-            disp("OUTSIDE: ")
-            inside = 1;
-        end
+            inside = enum;
+%         % both positions within a connection
+%         if currinside && nextinside
+%             inside = 1;
+%             % disp("Was just inside")
+% 
+%             % current pos in, next pos out
+%         elseif currinside && ~nextinside
+%             % disp("next_outside")
+%             inside = 0;
+% 
+%             % current pos out, next pos in
+%         elseif ~currinside && nextinside
+% 
+%             disp("RW Outside NextInside: ");
+%             inside = 1;
+% 
+%             % both positions outside
+%         elseif ~currinside && ~nextinside
+%             disp("RW Outside: ");
+%             inside = 1;
+%         else
+%             disp("OUTSIDE: ")
+%             inside = 1;
+%         end
 
     end
 

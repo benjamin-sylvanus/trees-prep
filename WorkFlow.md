@@ -147,3 +147,329 @@ Output:
 - vsize: voxel size
 
 - range: range of our voxelized geometry
+
+
+## Section 2
+
+We will take our simulation parameters and create a simulation object.
+
+We do this by initializing a random_walker_sim class
+
+### random_walker_sim  
+
+Args:
+
+- LUT: Our lookup table.
+- B: node ids {childList, parentList} for voxels.
+- pairs: pairs of elements in swc.
+- boundSize: bounds of geometry.
+- swcmat: swc in matrix format.
+- step_size: step size of sim.
+- perm_prob: permeation probability of sim.
+- step_num: number of steps.
+- init_in: Boolean repr if particles must start inside the cell
+- particle_num: number of particles to initialize
+- memoized_distance: distance between connections.
+
+We first set our arguments to our object props.
+The only additional step in the constructor is to initialize our particles.
+
+#### init_particles(iter,chunksize)
+
+Args:
+
+- obj: simulation obj.
+- iter: number of iterations in our simulation.
+- chunksize: depreciated argument.
+
+We create a cell array of size particle_num x 1.
+
+We the loop over each element of that cell array and create a randomwalker object with a random initial position.
+
+Output:
+
+- particles: cell array of initialized particles.
+
+After initializing particles we return the simulation object
+
+Output:
+
+- sim
+  - PARAMS:
+    - lookup_table: Lookup table of sim.
+
+    - index_array: index array of sim.
+
+    - pairs: pairs of swc.
+
+    - swc: swcfile in matrix format.
+
+    - step_size: step size of sim.
+
+    - perm_prob: permeation probability.
+
+    - boundSize: bounds of geometry.
+
+    - rwpath: empty matrix that will store positions of particles.
+
+    - logical_alloc: depreciated variable.
+
+    - currstate: array of booleans repr states of particles (inside||outside).
+
+    - particles: cell array of particle objects;
+
+    - particle_num: number of particles.
+
+    - memoized_distance: distances between each pair
+
+    - chunkSize: depreciated.
+
+    - path: path to simulation output.
+
+## Section 3
+
+After we have created a simulation object we are ready to run the simulation.
+
+### eventloop
+
+Args: 
+
+- obj: simulation object.
+
+- iter: number of steps the simulation will perform for each particle (redundant)
+
+eventloop is the main function of section 3.
+
+It starts by initializing the output files and paths.
+
+### obj.setsimulationpath
+
+Args:
+
+- iter: number of steps in sim.
+
+- obj.particle_num: number of particles in sim.
+
+Create a new directory for this simulations results.
+
+With larger step_nums and particle_nums saving the results to a variable can exceed the memory of local machine.  Instead we use a mat file to write to specific elements of file without reading full file into workspace.
+
+We initialize a matfile to store all particle positions per step. SIZE:
+(iter, particle_num, 3)
+
+We also initialize a matfile that stores our initial particle positions. SIZE: (particle_num,3)
+
+Output:
+
+- path: path to simulation results 
+
+- fileName: fileName of matObj.
+
+- matObj: handle for matfile of all particle positions per step.
+
+- initPosObj: handle for matfile of particle inital positions.
+
+As mentioned before the simulation results can't be stored entirely in memory. We define chunk_iter as the number of particles we iterate over before writing to matfile.
+
+The next step of event loop is to initialize our parallel pool. We have several constants that can be static on our workers and therefore only require initialization once.
+
+We use variable PARVARS to store these constants.
+
+finally we can iterate over the particles in a batch.
+
+We extract the data of our batch from the matobj and set it to zero.
+
+We then extract the relevant particles in our batch.
+
+We use parfor to iterate over each particle in batch.
+
+Create variables for the particles path and extract constants from worker variable.
+
+We initialize the random unit vectors for each step.
+
+iterate over each step accessing the random direction and perform the computations for the step.
+
+### cellgap2
+
+Args:
+
+- particle: [x y z state flag] of particle.
+
+- swc: swc matrix.
+
+- index_array: index array of sim.
+
+- boundSize: bounds of geometry.
+
+- lookup_table: lookup table of sim.
+
+- step: step its on.
+
+- perm_prob: permeation probability.
+
+- crand: current random vector.
+
+
+We start by defining position,state,and flag from our particle argument.
+
+The function enters a control sequence.
+
+If the flag is true we just collided with a boundary and didn't permeate. We should stand still for 1 step.
+
+Otherwise we find the next position of the particle
+
+#### setnext
+
+Args:
+
+- position: current position of particle
+
+- step: step size.
+
+- crand: random unit vector.
+
+We take the product of our vector and our step and add it to the current position of the particle.
+
+Output:
+
+- next: next position of particle.
+
+After determining the next position of the particle we must decide whether the particle can make this step.
+
+#### checkpos
+
+Args:
+
+- next: next position of particle.
+
+- swc: swc matrix
+
+- index_array: index array of particles.
+
+- state: state of current position
+
+- boundSize: bounds of geometry
+
+- lookup_table: lookup table of simulation.
+
+the first step in check pos is to extract the [child, parent] ids of any segments near the location of the particle. 
+
+#### preprocesses
+
+Args:
+
+- next: next position.
+
+- boundSize: bounds of geometry.
+
+- lookup_table: lookup table of sim.
+
+We convert the coordinate location to voxel of our next position.
+
+Generate a logical array of elements within range 0 < n < boundSize.
+
+Extract the voxels that exist within the range of our lookup table.
+
+These voxels are in subscript indicies of our lookup table. Subscript indices are slow in matlab so we convert them to linear indices.
+
+We return the nonzero elements of our lookup table at these linear indicies.
+
+Output:
+
+- Indicies: Indicies obtained from our lookup table that reference data in our index array.
+
+There are two outcomes from preprocesses:
+
+Either there are elements of the cell near the particle or there are not.
+
+if there are we check each connection to determine whether a boundary is crossed by executing this step.
+
+if the are no elements near the particle the no boundaries were crossed but the particle is not inside the cell.
+
+CASE 1: There were elements near particle.
+
+#### check_connections
+
+Args:
+
+- indicies: indicies of our index array.
+
+- A: index array.
+
+- swc: swc matrix.
+
+- next: next position.
+
+- currstate: current state of particle.
+
+Extract child and parent ids from index array.
+
+Extract child parent coords from index array.
+
+Init variables x,y,z of next.
+
+Iterate over node pairs checking connections using pointbasedswc2v.
+
+set nextinside to result of iteration or its previous value.
+
+if the particle is currently inside a connection and we find a connection that the particle will be inside if the step is taken we can break our loop and return.
+
+Output:
+
+- currinside: current state
+
+- nextinside: next state
+
+We use insideLogic to enumerate the boolean logic of the particle state.
+
+#### insideLogic
+
+Args:
+
+- currinside: current state
+
+- nextinside: next state
+
+Simple Control Sequence enumerating the possible states.
+
+if both are inside: no boundaries crossed.
+
+if the current position is inside and the next isn't: boundary was crossed: OUT.
+
+if the current position isn't inside and the next is: boundary was crossed: IN.
+
+if the both positions are outside then no boundary was crossed.
+
+Output:
+
+- inside: boolean for determining whether to freely step or apply and control sequence on step.
+
+***This can be made much better we can create an enum or class for the type of step it is***
+
+The determination of whether to control the step or freely step is returned to cellgap2.
+
+Output:
+
+- Collided: boolean for control step or free step.
+
+if there wasn't any collision, we freely step and set our current position to next.
+
+If there was a collision we determine whether the particle permeates using rand and our permeation probability.
+
+if it permeates we update the position and update the state.
+
+if it doesn't we do not update position and state. we set our flag to true.
+
+Lastly we rewrite the position, state, and flag to our particle and return it.
+
+Output:
+
+- Particle: [x,y,z,state,flag];
+
+The last component of a step is to store the coordinate positions of the particle for that step.
+
+After iteration over each step we write the particle positions for that particles simulation to our temporary data variable.
+
+After the parfor has iterated over each particle in that chunk we write the position data to our mat file.
+
+Once each chunk has been completed we are finished.

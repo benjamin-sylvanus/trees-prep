@@ -1,14 +1,11 @@
 function obj = eventloop(obj, iter)
-
-    i = 1;
-    chunk_iter = 100000;
-    obj.currstate = zeros(obj.particle_num, 1, "logical");
-    obj.currstate(:) = true;
-
     [path, ~, matObj, initPosObj] = obj.setsimulationpath(iter, ...
         obj.particle_num);
-
     obj.path = path;
+    i = 1;
+    chunk_iter = 1000;
+    obj.currstate = zeros(obj.particle_num, 1, "logical");
+    obj.currstate(:) = true;
     %     obj.rwpath = zeros(iter, obj.particle_num, 3);
     PARTS = [obj.particles{:}]';
     PARTS = [[PARTS(:).curr]', [obj.currstate(:)], [PARTS(:).flag]'];
@@ -33,12 +30,10 @@ function obj = eventloop(obj, iter)
         chunk = batch:batch + chunk_iter - 1;
         data = matObj.data(:, chunk, :);
         data(:) = 0;
-        parties = particles(chunk,:);
-        t0=tic;
+        parties = particles(chunk, :);
+        t0 = tic;
 
         parfor i = 1:numel(chunk)
-%             parties = particles(chunk, :);
-
             rwpath = zeros(iter, 5);
             swc = PARVARS.Value.swc;
             index_array = PARVARS.Value.index_array;
@@ -66,6 +61,7 @@ function obj = eventloop(obj, iter)
 
             data(:, i, :) = reshape(rwpath(:, 1:3), [size(data(:, i, :))]);
         end
+
         matObj.data(:, chunk, :) = data(:, :, :);
         t = toc(t0);
         fprintf("Completed batch (%d:%d)x%d steps in %f seconds\n", ...

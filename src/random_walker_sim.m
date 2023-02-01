@@ -11,7 +11,6 @@ classdef random_walker_sim
         perm_prob;
         boundSize;
         rwpath;
-        steplen;
         logical_alloc;
         currstate;
         particles;

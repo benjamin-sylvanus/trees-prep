@@ -1,4 +1,4 @@
-
+%% Section 1
 clc; clearvars; close all;
 scale = 1;
 
@@ -8,7 +8,7 @@ scale = 1;
 clc;
 % dependent on geometry and diffusion time
 D0 = 2; % 2um^2/ms; 
-d = (min(swc.Radii).*0.1)*vsize; % swc is in voxel scale 
+d = (min(swc.Radii).*0.05)*vsize; % swc is in voxel scale 
 tstep = ((d*d)/6)/D0;
 step_size = d./vsize; 
 perm_prob = 0.0000;
@@ -38,8 +38,8 @@ clear sim;
 
 % at least 1e3 steps
 % at least 1e4 particles
-step_num = 1; 
-particle_num = 2e6;
+step_num = 1e4; 
+particle_num = 1e4;
 
 % points = zeros(length(A),1);
 % uniqs{1,1} = A{1};
@@ -60,8 +60,9 @@ particle_num = 2e6;
 %     end
 % end
 
+%% Section 2
 % initialize sim
-tic;
+tic; 
 sim = random_walker_sim(LUT, B, pairs, boundSize, swcmat, step_size, ...
     perm_prob, step_num, init_in, particle_num, memoized_distance(:, 3));
 toc; 
@@ -71,7 +72,7 @@ tic;
     x0 = swc.X(1); y0 = swc.X(1); z0 = swc.Z(1);
     ps = sim.particles;
     
-parfor i = 1:particle_num
+for i = 1:particle_num
     n = 1; m = 1;
     theta = 2*pi*rand(n,m);
     v = rand(n,m);
@@ -86,16 +87,16 @@ end
 sim.particles = ps;
 toc;
 % save("randominits","sim");
-
-
-
-
-
 % clear sim;
 % load("randominits");
+
+%% Section 3
 tic;
 sim = eventloop(sim, step_num);
 toc;
+
+
+%% Section 4
 
 % fid=fopen('/Users/benjaminsylvanus/CLionProjects/testclion/data/LUT.bin','w');
 % fwrite(fid,lut,"uint16","b");
@@ -109,39 +110,10 @@ setresults(path,vsize,tstep);
 clear data;
 load(sim.path + "/initialPos.mat");
 figure();
-scatter3(data(1:10000:end,1),data(1:10000:end,2),data(1:10000:end,3));
+scatter3(data(1:1000:end,1),data(1:1000:end,2),data(1:1000:end,3));
 axis equal;
-hold on; 
+hold on;
 mainLoop(swc{:,:},LUT,b,pairs);
-
-%%
-% % r = 1;
-% s = 10;
-% % theta = random(0,TWO_PI);
-% n = 10000; m = 1;
-% theta = 2*pi*rand(n,m);
-% % v = random(0,1);
-% v = rand(n,m);
-% % phi = acos((2*v)-1);
-% phi = acos((2.*v)-1);
-% 
-% % r = pow(random(0,1), 1/3);
-% r = rand(n,m).^(1/3);
-% 
-% % x= r * sin(phi) * cos(theta);
-% 
-% x = s*r .* sin(phi) .* cos(theta);
-% % y= r * sin(phi) * sin(theta);
-% y = s*r .* sin(phi) .* sin(theta);
-% z = s*r .* cos(phi);
-% 
-% scatter3(x,y,z);
-% 
-% % z= r * cos(phi);
-% 
-% % q= @() eventloop(sim,step_num);
-% % timeit(q)
-
 
 %%
 path = sim.path;
